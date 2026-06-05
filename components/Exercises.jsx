@@ -215,11 +215,13 @@ function ConvertExercise({ step, apiRef, onCanCheck, phase, slot }) {
       <div style={exprBox}>
         <MeasureExpr m={fromExpr}/>
         <span style={{ fontSize: "calc(34px * var(--scale))", fontWeight: 700, color: "var(--ink-soft)" }}>=</span>
-        {slots.map((s, i) => (
-          <AnswerField key={i} value={entry.vals[i]} unit={s.unit}
-            active={phase === "input" && entry.active === i} state={fState(i)}
-            onFocus={phase === "input" ? () => entry.setActive(i) : null}/>
-        ))}
+        <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "nowrap" }}>
+          {slots.map((s, i) => (
+            <AnswerField key={i} value={entry.vals[i]} unit={s.unit}
+              active={phase === "input" && entry.active === i} state={fState(i)}
+              onFocus={phase === "input" ? () => entry.setActive(i) : null}/>
+          ))}
+        </div>
       </div>
       <NumberPad onDigit={entry.push} onDelete={entry.del} disabled={phase === "checked"}/>
     </div>
