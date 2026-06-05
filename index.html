@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<title>Midoku — Mide y aprende (cm y mm)</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Andika:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
+
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg"/>
+<link rel="stylesheet" href="styles/base.css"/>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="data/lesson.js"></script>
+<script src="data/problems.js"></script>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- Diagnóstico: si algo falla antes de montar React, queda rastro visible. -->
+<div id="boot-log" style="position: fixed; left: 0; right: 0; bottom: 0; max-height: 50vh; overflow: auto; background: rgba(20,20,24,0.95); color: #f4f4f6; font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace; padding: 8px 12px; z-index: 99999; border-top: 2px solid #fda4af; display: none;"></div>
+<script>
+(function () {
+  var box = document.getElementById("boot-log");
+  function show() { if (box) box.style.display = "block"; }
+  function add(kind, msg) {
+    show();
+    var line = document.createElement("div");
+    line.style.color = kind === "error" ? "#fca5a5" : "#fcd34d";
+    line.style.padding = "2px 0";
+    line.textContent = "[" + kind + "] " + msg;
+    box.appendChild(line);
+  }
+  window.addEventListener("error", function (e) {
+    var src = e.filename ? e.filename.split("/").pop() : "";
+    add("error", (e.message || "Error") + (src ? " — " + src + ":" + (e.lineno || "?") : ""));
+  });
+  window.addEventListener("unhandledrejection", function (e) {
+    add("error", "Promise rechazada: " + (e.reason && e.reason.message ? e.reason.message : e.reason));
+  });
+  setTimeout(function () {
+    var app = document.getElementById("app");
+    if (app && app.firstChild && box) box.style.display = "none";
+  }, 8000);
+})();
+</script>
+
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="components/shared.jsx"></script>
+<script type="text/babel" src="components/Ruler.jsx"></script>
+<script type="text/babel" src="components/NumberPad.jsx"></script>
+<script type="text/babel" src="components/Exercises.jsx"></script>
+<script type="text/babel" src="components/Lesson.jsx"></script>
+<script type="text/babel" src="components/Browse.jsx"></script>
+<script type="text/babel" src="components/Problems.jsx"></script>
+<script type="text/babel" src="components/LessonMap.jsx"></script>
+<script type="text/babel" src="components/App.jsx"></script>
+
+<template id="__bundler_thumbnail">
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100" height="100" fill="#FFF8EE"/>
+  <rect x="18" y="42" width="64" height="22" rx="4" fill="#F7E9C8" stroke="#2A2A33" stroke-width="2.5"/>
+  <g stroke="#3A3326" stroke-width="1.6">
+    <line x1="26" y1="42" x2="26" y2="56"/><line x1="34" y1="42" x2="34" y2="50"/>
+    <line x1="42" y1="42" x2="42" y2="56"/><line x1="50" y1="42" x2="50" y2="50"/>
+    <line x1="58" y1="42" x2="58" y2="56"/><line x1="66" y1="42" x2="66" y2="50"/>
+    <line x1="74" y1="42" x2="74" y2="56"/>
+  </g>
+</svg>
+</template>
+</body>
+</html>

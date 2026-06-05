@@ -1,0 +1,371 @@
+/* Supeingo — estilos base
+   Paleta pastel cálida, accesible para daltonismo
+   (acierto/error usan forma + color, no solo color)
+*/
+
+:root {
+  /* Paleta principal — pastel suave */
+  --bg:        #FFF8EE;       /* crema cálida */
+  --bg-2:      #FFEDD8;       /* crema más cálida */
+  --surface:   #FFFFFF;
+  --ink:       #2A2A33;       /* casi negro, cálido */
+  --ink-soft:  #6B6B78;
+  --ink-faint: #A8A8B3;
+  /* ink-highlight — resaltado de un fragmento de texto (p.ej. la
+     letra objetivo dentro de una palabra ejemplo en El abecedario,
+     o la letra que falta en LetterHunt). Semánticamente distinto del
+     primary-strong (que es texto de marca). */
+  --ink-highlight: #E76F51;
+
+  /* Primary — marca principal: card "Jugar", sílabas activas,
+     fills de ilustraciones. */
+  --primary:        #F4978E;   /* coral suave */
+  --primary-strong: #E76F51;   /* coral fuerte — texto de marca "español" */
+
+  /* Secondary — marca secundaria: card "Aprender", botones CTA. */
+  --secondary:        #8E9AAF;   /* azul-gris */
+  --secondary-strong: #5A6F8C;   /* fondo del botón primario (Comprobar) */
+
+  /* Tertiary — 3er acento para ilustraciones (TO en Jugar,
+     ME-MI en Sílabas, cada 3ª letra del abecedario). Tertiary-soft
+     es el fondo suave compañero (info messages en Settings, etc). */
+  --tertiary:        #F4D060;
+  --tertiary-soft:   #FBEFC4;
+
+  /* Estados positivos — acierto. */
+  --ok:        #6FB58A;       /* verde apagado */
+  --ok-soft:   #DDF0E4;
+
+  /* Estados negativos — errores y respuestas incorrectas. Tono
+     cálido/naranja en lugar del rojo estándar, para mantener el
+     feedback amable en una app infantil. */
+  --ng:        #F4A261;
+  --ng-soft:   #FBE5CB;
+
+  /* Tokens de superficie */
+  --r-sm: 12px;
+  --r-md: 18px;
+  --r-lg: 28px;
+  --r-xl: 40px;
+
+  --shadow-sm: 0 2px 0 rgba(42, 42, 51, 0.08);
+  --shadow-md: 0 4px 0 rgba(42, 42, 51, 0.12), 0 8px 24px -8px rgba(42, 42, 51, 0.18);
+  --shadow-lg: 0 6px 0 rgba(42, 42, 51, 0.14), 0 16px 40px -12px rgba(42, 42, 51, 0.22);
+  --shadow-press: 0 1px 0 rgba(42, 42, 51, 0.08);
+
+  /* Espaciado base — los tweaks lo escalan */
+  --scale: 1;
+  --space-1: calc(4px * var(--scale));
+  --space-2: calc(8px * var(--scale));
+  --space-3: calc(12px * var(--scale));
+  --space-4: calc(16px * var(--scale));
+  --space-5: calc(24px * var(--scale));
+  --space-6: calc(32px * var(--scale));
+  --space-7: calc(48px * var(--scale));
+  --space-8: calc(64px * var(--scale));
+
+  --tap: calc(56px * var(--scale)); /* tamaño mínimo táctil */
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Paletas experimentales — exploración A/B con familias/niños.
+   Cada una redefine TODOS los tokens cromáticos para que el cambio
+   sea total (no parche sobre :root). Nombres evocativos en vez de
+   descriptivos para no sesgar la decisión.
+   ────────────────────────────────────────────────────────────── */
+
+/* Mar — fríos suaves, azul-agua + verde mar. */
+[data-palette="mar"] {
+  --bg:        #EEF6F8;
+  --bg-2:      #D6E8EE;
+  --surface:   #FFFFFF;
+  --ink:       #1F2A33;
+  --ink-soft:  #56697A;
+  --ink-faint: #9CB0BC;
+  --primary:        #7FB6CC;
+  --primary-strong: #2D7F9D;
+  --secondary:        #8FB59B;
+  --secondary-strong: #4A7A5A;
+  --tertiary:        #E5B57A;
+  --tertiary-soft:   #F6E2C2;
+  --ink-highlight: #2D7F9D;
+  --ok:        #6FB58A;
+  --ok-soft:   #DDF0E4;
+  --ng:        #E8A95C;
+  --ng-soft:   #F6E2C2;
+}
+
+/* Cuaderno — blanco papel, tinta marcada, ámbar+azul como rotulador. */
+[data-palette="cuaderno"] {
+  --bg:        #FAFAF7;
+  --bg-2:      #EEEEE7;
+  --surface:   #FFFFFF;
+  --ink:       #1A1A1A;
+  --ink-soft:  #555555;
+  --ink-faint: #B5B5B5;
+  --primary:        #FFB84D;
+  --primary-strong: #E08A18;
+  --secondary:        #4A90D9;
+  --secondary-strong: #2C5F9A;
+  --tertiary:        #9B5BB0;
+  --tertiary-soft:   #E8DCF1;
+  --ink-highlight: #E08A18;
+  --ok:        #4FAA72;
+  --ok-soft:   #D8EEDF;
+  --ng:        #E8A93C;
+  --ng-soft:   #FCE9C2;
+}
+
+/* Cobre — cálidos terrosos, melocotón + tabaco. */
+[data-palette="cobre"] {
+  --bg:        #F9F1E7;
+  --bg-2:      #F0DEC4;
+  --surface:   #FFF8F0;
+  --ink:       #2E2118;
+  --ink-soft:  #6E5A48;
+  --ink-faint: #B0A088;
+  --primary:        #E29577;
+  --primary-strong: #B85E3C;
+  --secondary:        #A07A56;
+  --secondary-strong: #6E4F33;
+  --tertiary:        #94A06A;
+  --tertiary-soft:   #DEE5C6;
+  --ink-highlight: #B85E3C;
+  --ok:        #8AAE72;
+  --ok-soft:   #E0EBD3;
+  --ng:        #D89254;
+  --ng-soft:   #F4DDBA;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Fredoka', system-ui, -apple-system, sans-serif;
+  font-feature-settings: "kern" 1;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+button:focus-visible {
+  outline: 3px solid var(--secondary-strong);
+  outline-offset: 3px;
+}
+
+/* Tipografía específica para enseñar a leer letras
+   Andika es libre y diseñada para alfabetización */
+.letter-face {
+  font-family: 'Andika', 'Fredoka', sans-serif;
+  font-weight: 700;
+}
+
+/* App shell — móvil first, escala a desktop */
+.app-shell {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--bg);
+  position: relative;
+  overflow-x: hidden;
+}
+
+@media (min-width: 900px) {
+  .app-shell {
+    max-width: 1100px;
+  }
+}
+
+/* Decoración sutil de fondo — manchas crema */
+.bg-decor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+.bg-decor::before, .bg-decor::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.5;
+}
+.bg-decor::before {
+  width: 280px; height: 280px;
+  background: var(--bg-2);
+  top: -80px; right: -80px;
+}
+.bg-decor::after {
+  width: 220px; height: 220px;
+  background: var(--primary);
+  opacity: 0.15;
+  bottom: -60px; left: -60px;
+}
+
+/* Animaciones reutilizables */
+@keyframes pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+@keyframes ping {
+  0% { transform: scale(0.6); opacity: 1; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+@keyframes drift {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-6px) rotate(2deg); }
+}
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.4); }
+  50%      { transform: scaleY(1); }
+}
+@keyframes confetti-fall {
+  0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(120px) rotate(360deg); opacity: 0; }
+}
+@keyframes slide-up {
+  0%   { transform: translateY(20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+@keyframes chip-in {
+  0%   { transform: scale(0.4) translateY(-30px); opacity: 0; }
+  60%  { transform: scale(1.1) translateY(0); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+@keyframes fly-to-list {
+  0%   { transform: translate(-50%, -50%) scale(1); opacity: 1; top: 38%; }
+  60%  { transform: translate(-50%, -50%) scale(0.85); opacity: 0.95; }
+  100% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; top: 88%; }
+}
+@keyframes trophy-in {
+  0%   { transform: scale(0) rotate(-25deg); opacity: 0; }
+  60%  { transform: scale(1.1) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* Press effect via CSS — más fiable que mutar inline styles */
+.syllable-tile[data-placed="0"]:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--ink) !important;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   MIDOKU — tokens específicos de la app de longitudes (cm/mm)
+   Extiende los tokens de Supeingo. La regla es el manipulable
+   protagonista, por eso tiene su propia familia
+   de tokens cromáticos y de medida.
+   ────────────────────────────────────────────────────────────── */
+:root {
+  /* La regla: madera clara cálida + tinta de marcas. Un cm en píxeles
+     es la unidad base del manipulable; los tweaks la pueden escalar. */
+  --cm-px: 34px;                 /* 1 cm dibujado = 34px (× --scale) */
+  --ruler-face:   #F7E9C8;       /* madera clara */
+  --ruler-face-2: #F0DCAE;       /* veta más cálida */
+  --ruler-edge:   #C9A765;       /* canto */
+  --ruler-tick:   #3A3326;       /* marcas mm/cm */
+  --ruler-num:    #2A2A33;       /* números cm */
+
+  /* mm acento — el "grano fino" frente al cm. Verde azulado fresco que
+     contrasta con el coral cálido sin pelear con la paleta. */
+  --mm:        #2C9C8F;
+  --mm-soft:   #D4EFEA;
+  --cm-accent: var(--primary-strong);
+
+  /* Segmento medido / resaltado sobre la regla (cinta translúcida). */
+  --measure:      #E76F51;
+  --measure-soft: rgba(231, 111, 81, 0.22);
+
+  /* Corazón / vida. */
+  --heart: #F4978E;
+  --heart-strong: #E76F51;
+}
+
+/* Dígitos de matemáticas — Fredoka tabular para que las cifras no bailen
+   y se lean grandes y firmes (número como protagonista). */
+.math-num {
+  font-family: 'Fredoka', system-ui, sans-serif;
+  font-weight: 700;
+  font-feature-settings: "tnum" 1, "kern" 1;
+  letter-spacing: 0.01em;
+}
+
+/* La regla hereda madera; las marcas se dibujan con gradientes repetidos
+   para nitidez perfecta a cualquier escala. */
+.ruler-face {
+  background:
+    linear-gradient(180deg, var(--ruler-face) 0%, var(--ruler-face-2) 100%);
+  border: 3px solid var(--ink);
+  border-radius: 10px;
+  box-shadow: var(--shadow-md);
+}
+
+@keyframes tape-grow {
+  0%   { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
+@keyframes count-pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes heart-break {
+  0%   { transform: scale(1) rotate(0); }
+  30%  { transform: scale(1.25) rotate(-8deg); }
+  100% { transform: scale(0) rotate(12deg); opacity: 0; }
+}
+@keyframes feedback-in {
+  0%   { transform: translateY(14px); }
+  100% { transform: translateY(0); }
+}
+@keyframes glow-correct {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(111,181,138,0); }
+  50%      { box-shadow: 0 0 0 6px rgba(111,181,138,0.35); }
+}
+@keyframes node-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+/* Entrada de paso de lección — SOLO transform. El estado base es visible
+   (opacity:1) para que, si el navegador pausa la animación por throttling
+   del iframe, el contenido nunca quede invisible. */
+@keyframes step-rise {
+  0%   { transform: translateY(16px); }
+  100% { transform: translateY(0); }
+}
+
+/* Accesibilidad: respetar la preferencia del SO de reducir movimiento.
+   Pause el bob, shake, pop, fly-to-list, chip-in, trophy-in, drift, wave.
+   Mantenemos transiciones cortas (color/opacidad) que comunican estado. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
