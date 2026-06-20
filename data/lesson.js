@@ -64,7 +64,11 @@ window.fmtMeasure = (m) => {
   return `${mm} mm`;
 };
 
-// Catálogo de lecciones del curso 1-2年. Por ahora una: cm/mm.
+// Catálogo de lecciones del curso 1-2年.
+// Orden didáctico: primero la aritmética básica (sumas → restas), luego
+// la lección de medida (cm/mm).
 window.MIDOKU_LESSONS = [
-  { id: "units", lesson: "MIDOKU_LESSON_1", icon: "ruler", state: "active" },
+  { id: "add",      icon: "plus",  state: "active" },
+  { id: "subtract", icon: "minus", state: "active" },
+  { id: "units",    icon: "ruler", state: "active" },
 ];

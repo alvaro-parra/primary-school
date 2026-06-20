@@ -22,9 +22,10 @@ function useNumEntry(slots, slot) {
     return c;
   });
   const del = () => setVals(v => { const c = [...v]; c[active] = c[active].slice(0, -1); if (slot) slot.vals = c; return c; });
+  const clear = () => setVals(v => { const c = [...v]; c[active] = ""; if (slot) slot.vals = c; return c; });
   const setActiveP = (i) => { if (slot) slot.active = i; setActive(i); };
   const filled = vals.every(x => x !== "");
-  return { vals, active, setActive: setActiveP, push, del, filled };
+  return { vals, active, setActive: setActiveP, push, del, clear, filled };
 }
 
 /* Barra de pregunta — solo título (sin voz por ahora). */
@@ -146,7 +147,7 @@ function MeasureExercise({ step, apiRef, onCanCheck, phase, result, slot }) {
             onFocus={phase === "input" ? () => entry.setActive(i) : null}/>
         ))}
       </div>
-      <NumberPad onDigit={entry.push} onDelete={entry.del} disabled={phase === "checked"}/>
+      <NumberPad onDigit={entry.push} onDelete={entry.del} onClear={entry.clear} disabled={phase === "checked"}/>
     </div>
   );
 }
@@ -223,7 +224,7 @@ function ConvertExercise({ step, apiRef, onCanCheck, phase, slot }) {
           ))}
         </div>
       </div>
-      <NumberPad onDigit={entry.push} onDelete={entry.del} disabled={phase === "checked"}/>
+      <NumberPad onDigit={entry.push} onDelete={entry.del} onClear={entry.clear} disabled={phase === "checked"}/>
     </div>
   );
 }
@@ -302,7 +303,7 @@ function AddExercise({ step, apiRef, onCanCheck, phase, slot }) {
             onFocus={phase === "input" ? () => entry.setActive(i) : null}/>
         ))}
       </div>
-      <NumberPad onDigit={entry.push} onDelete={entry.del} disabled={phase === "checked"}/>
+      <NumberPad onDigit={entry.push} onDelete={entry.del} onClear={entry.clear} disabled={phase === "checked"}/>
     </div>
   );
 }
@@ -332,7 +333,56 @@ function SubtractExercise({ step, apiRef, onCanCheck, phase, slot }) {
             onFocus={phase === "input" ? () => entry.setActive(i) : null}/>
         ))}
       </div>
-      <NumberPad onDigit={entry.push} onDelete={entry.del} disabled={phase === "checked"}/>
+      <NumberPad onDigit={entry.push} onDelete={entry.del} onClear={entry.clear} disabled={phase === "checked"}/>
+    </div>
+  );
+}
+
+/* ── INT OP (suma/resta de enteros, hasta 4 dígitos en el resultado) ─
+   Layout vertical estilo libreta: cifras alineadas a la derecha, operador
+   colgando a la izquierda de la segunda fila, línea horizontal y respuesta. */
+function IntOpExercise({ step, apiRef, onCanCheck, phase, slot }) {
+  const isAdd = step.type === "intAdd";
+  const answer = isAdd ? step.a + step.b : step.a - step.b;
+  const maxDigits = String(answer).length;
+  const entry = useNumEntry([{ unit: "", max: maxDigits }], slot);
+  useEffect(() => {
+    apiRef.current = {
+      correctLabel: String(answer),
+      check: () => Number(entry.vals[0]) === answer,
+    };
+  });
+  useEffect(() => { onCanCheck(entry.filled); }, [entry.filled]);
+  const fState = phase !== "checked" ? null : (Number(entry.vals[0]) === answer ? "ok" : "ng");
+
+  const numStyle = { fontSize: "calc(44px * var(--scale))", fontWeight: 700, lineHeight: 1.05 };
+  const opColor = isAdd ? "var(--ok)" : "var(--ng)";
+
+  return (
+    <div style={{ display: "grid", gap: "var(--space-4)" }}>
+      <QuestionBar>{isAdd ? t("addNum") : t("subNum")}</QuestionBar>
+      <div style={{ display: "grid", justifyContent: "center", padding: "var(--space-4) 0" }}>
+        <div style={{
+          display: "inline-grid", gridTemplateColumns: "auto auto",
+          columnGap: "calc(16px * var(--scale))", rowGap: "calc(2px * var(--scale))",
+          justifyItems: "end", alignItems: "center",
+        }}>
+          {/* Fila 1: primer operando */}
+          <span aria-hidden/>
+          <span className="math-num" style={numStyle}>{step.a}</span>
+          {/* Fila 2: operador + segundo operando */}
+          <span className="math-num" style={{ ...numStyle, color: opColor }}>{isAdd ? "+" : "−"}</span>
+          <span className="math-num" style={numStyle}>{step.b}</span>
+          {/* Línea separadora */}
+          <div style={{ gridColumn: "1 / -1", justifySelf: "stretch", height: 3, background: "var(--ink)", marginTop: "calc(6px * var(--scale))", marginBottom: "calc(8px * var(--scale))", borderRadius: 2 }}/>
+          {/* Fila 3: respuesta */}
+          <span aria-hidden/>
+          <AnswerField value={entry.vals[0]} unit=""
+            active={phase === "input"} state={fState}
+            onFocus={phase === "input" ? () => entry.setActive(0) : null}/>
+        </div>
+      </div>
+      <NumberPad onDigit={entry.push} onDelete={entry.del} onClear={entry.clear} disabled={phase === "checked"}/>
     </div>
   );
 }
@@ -350,6 +400,8 @@ function Exercise(props) {
     case "compare": return <CompareExercise {...props}/>;
     case "add": return <AddExercise {...props}/>;
     case "subtract": return <SubtractExercise {...props}/>;
+    case "intAdd":
+    case "intSub": return <IntOpExercise {...props}/>;
     default: return <div>?</div>;
   }
 }

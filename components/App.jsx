@@ -18,12 +18,19 @@ function App() {
   const [route, setRoute] = useState("map");   // "map" | "list" | "intro" | "problems" | "play"
   const [activeLesson, setActiveLesson] = useState(null);
   const [activeProblem, setActiveProblem] = useState(null);
+  // solved: { [lessonId]: { [problemId]: true } }
   const [solved, setSolved] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("midoku_solved") || "{}"); } catch (e) { return {}; }
+    try { return JSON.parse(localStorage.getItem("midoku_solved_v2") || "{}"); } catch (e) { return {}; }
   });
-  const problemTypes = window.MIDOKU_PROBLEM_TYPES || [];
-  // La lección se marca completada cuando se resuelven todos los problemas.
-  const completed = { units: problemTypes.length > 0 && problemTypes.every(p => solved[p.id]) };
+  const problemsByLesson = window.MIDOKU_PROBLEMS_BY_LESSON || {};
+  const problemTypes = (activeLesson && problemsByLesson[activeLesson]) || [];
+  // Una lección se marca completada cuando se resuelven todos sus problemas.
+  const completed = {};
+  for (const lid of Object.keys(problemsByLesson)) {
+    const list = problemsByLesson[lid];
+    const s = solved[lid] || {};
+    completed[lid] = list.length > 0 && list.every(p => s[p.id]);
+  }
 
   // Aplica tema y escala al documento.
   useEffect(() => {
@@ -52,25 +59,30 @@ function App() {
   const pickProblem = (id) => { setActiveProblem(id); setRoute("play"); };
   const [justCompleted, setJustCompleted] = useState(false);
   const markSolved = (id) => {
-    const wasAll = problemTypes.length > 0 && problemTypes.every(p => solved[p.id]);
-    const next = { ...solved, [id]: true };
-    const nowAll = problemTypes.length > 0 && problemTypes.every(p => next[p.id]);
+    const cur = solved[activeLesson] || {};
+    const wasAll = problemTypes.length > 0 && problemTypes.every(p => cur[p.id]);
+    const nextCur = { ...cur, [id]: true };
+    const nowAll = problemTypes.length > 0 && problemTypes.every(p => nextCur[p.id]);
+    const next = { ...solved, [activeLesson]: nextCur };
     setSolved(next);
-    try { localStorage.setItem("midoku_solved", JSON.stringify(next)); } catch (e) {}
+    try { localStorage.setItem("midoku_solved_v2", JSON.stringify(next)); } catch (e) {}
     if (nowAll && !wasAll) setJustCompleted(true);   // celebrar SOLO al completar
   };
   const problemById = (id) => problemTypes.find(p => p.id === id) || problemTypes[0];
+  // Reset solo de la lección actual (no borra el progreso de otras).
   const resetSolved = () => {
-    setSolved({});
+    const next = { ...solved };
+    delete next[activeLesson];
+    setSolved(next);
     setJustCompleted(false);
-    try { localStorage.removeItem("midoku_solved"); } catch (e) {}
+    try { localStorage.setItem("midoku_solved_v2", JSON.stringify(next)); } catch (e) {}
   };
 
   let screen;
   if (route === "play") {
     screen = <ProblemPlay problem={problemById(activeProblem)} onBack={() => setRoute("problems")} onSolved={markSolved}/>;
   } else if (route === "problems") {
-    screen = <ProblemList problems={problemTypes} solved={solved} onBack={() => setRoute("intro")} onPick={pickProblem} onReset={resetSolved}
+    screen = <ProblemList problems={problemTypes} solved={solved[activeLesson] || {}} onBack={() => setRoute("intro")} onPick={pickProblem} onReset={resetSolved}
       justCompleted={justCompleted} onCelebrated={() => setJustCompleted(false)}/>;
   } else if (route === "intro") {
     screen = <LessonIntro lessonId={activeLesson} onBack={() => setRoute("list")} onStart={openProblems}/>;

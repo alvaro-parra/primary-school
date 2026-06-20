@@ -27,15 +27,17 @@ function AnswerField({ value, unit, active = false, state = null, onFocus = null
         color: empty ? (active ? "var(--secondary-strong)" : "var(--ink-faint)") : "var(--ink)",
         minWidth: "0.7em", textAlign: "center",
       }}>{empty ? placeholder : value}</span>
-      <span style={{ fontSize: "calc(20px * var(--scale))", fontWeight: 700, color: unitColor }}>{unit}</span>
+      {unit && <span style={{ fontSize: "calc(20px * var(--scale))", fontWeight: 700, color: unitColor }}>{unit}</span>}
     </button>
   );
 }
 
 // Teclado numérico — teclas de cartón con press físico.
-function NumberPad({ onDigit, onDelete, disabled = false, maxCols = 3 }) {
+// `onClear` opcional: pinta una "C" a la izquierda del 0, con el mismo
+// estilo "secundario" que el botón de borrar.
+function NumberPad({ onDigit, onDelete, onClear, disabled = false, maxCols = 3 }) {
   const Key = ({ label, onClick, kind = "num", ariaLabel }) => {
-    const bg = kind === "del" ? "var(--bg-2)" : "var(--surface)";
+    const bg = kind === "num" ? "var(--surface)" : "var(--bg-2)";
     const press = (e, down) => {
       if (disabled) return;
       e.currentTarget.style.transform = down ? "translateY(4px)" : "translateY(0)";
@@ -57,7 +59,9 @@ function NumberPad({ onDigit, onDelete, disabled = false, maxCols = 3 }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: `repeat(${maxCols}, 1fr)`, gap: "var(--space-2)", maxWidth: 360, margin: "0 auto", width: "100%" }}>
       {[1,2,3,4,5,6,7,8,9].map(n => <Key key={n} label={String(n)} onClick={() => onDigit(n)}/>)}
-      <span/>
+      {onClear
+        ? <Key kind="clear" ariaLabel="Borrar todo" onClick={onClear} label="C"/>
+        : <span/>}
       <Key label="0" onClick={() => onDigit(0)}/>
       <Key kind="del" ariaLabel="Borrar" onClick={onDelete} label={
         <svg viewBox="0 0 24 24" width={28} height={28}><path d="M 8 5 L 21 5 L 21 19 L 8 19 L 3 12 Z" fill="none" stroke="var(--ink)" strokeWidth="2" strokeLinejoin="round"/><path d="M 11 9.5 L 17 14.5 M 17 9.5 L 11 14.5" stroke="var(--ink)" strokeWidth="2" strokeLinecap="round"/></svg>

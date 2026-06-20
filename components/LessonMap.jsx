@@ -2,7 +2,8 @@
 // Sin título, sin mascota, sin racha, sin camino de nodos.
 
 function LessonMap({ onStart, completed }) {
-  const done = completed && completed.units;
+  const ids = Object.keys(completed || {});
+  const done = ids.length > 0 && ids.every(k => completed[k]);
   return (
     <div style={{ position: "relative", minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "var(--space-6)", gap: "var(--space-5)" }}>
       <BgDecor/>

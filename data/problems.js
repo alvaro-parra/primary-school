@@ -1,40 +1,26 @@
 // Generadores de problemas — cada tipo produce variantes aleatorias por rango
 // (en vez de problemas fijos), así hay muchas combinaciones posibles.
 // Cada gen() devuelve una config de "step" compatible con <Exercise>.
+//
+// Los tipos se agrupan por lección en MIDOKU_PROBLEMS_BY_LESSON[lessonId].
 
 (function () {
   const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1)); // entero [a,b]
-  const COLORS = ["var(--secondary)", "var(--tertiary)", "var(--primary)", "var(--mm)"];
-  const rc = () => COLORS[ri(0, COLORS.length - 1)];
   const mmOf = (m) => (m.cm || 0) * 10 + (m.mm || 0);
 
-  const GEN = {
-    // Medir un objeto: cuántos cm (entero)
+  /* ── Generadores de la lección cm/mm ─────────────────────── */
+  const UNITS = {
     measureCm: () => ({ type: "measure", ask: "cm", object: { cm: ri(2, 11), mm: 0 } }),
-    // Leer cm y mm en una regla de ZOOM (el 0 no se ve; barra cortada).
-    // cm 2..9 para que el 0 quede siempre fuera; mm 1..9 (nunca 0).
+    // zoom: cm 2..9 para que el 0 quede fuera; mm 1..9 para que siempre haya resto.
     measureCmMm: () => ({ type: "measure", ask: "cmmm", object: { cm: ri(2, 9), mm: ri(1, 9) } }),
-    // Colocar la marca en la regla (rejilla de 5 mm: músltiplos de 5)
     setRuler: () => {
       const cm = ri(2, 11), mm = Math.random() < 0.5 ? 0 : 5;
       return { type: "setRuler", target: { cm, mm }, snap: "5mm" };
     },
-    // cm → mm
     toMm: () => ({ type: "convertToMm", from: { cm: ri(2, 11), mm: 0 }, support: true }),
-    // mm → cm y mm (con resto, p.ej. 94 mm = 9 cm 4 mm)
     toCm: () => ({ type: "convertToCm", from: { cm: ri(1, 11), mm: ri(1, 9) }, support: true }),
-    // cm y mm → mm
     mixedToMm: () => ({ type: "mixedToMm", from: { cm: ri(1, 9), mm: ri(1, 9) }, support: true }),
-    // ¿cuál es más largo?
-    compare: () => {
-      let a, b;
-      do { a = { cm: ri(1, 9), mm: ri(0, 9) }; b = { cm: ri(1, 9), mm: ri(0, 9) }; }
-      while (mmOf(a) === mmOf(b));
-      return { type: "compare", a, b };
-    },
-    // suma (puede llevar: mm que pasan de 10). Resultado ≤ 12 cm para la regla.
     add: () => ({ type: "add", a: { cm: ri(1, 5), mm: ri(1, 9) }, b: { cm: ri(1, 5), mm: ri(1, 9) } }),
-    // resta (resultado positivo; a veces con préstamo)
     subtract: () => {
       const a = { cm: ri(4, 11), mm: ri(0, 9) };
       let b;
@@ -43,30 +29,109 @@
     },
   };
 
-  // Lista de TIPOS de problema de la lección cm/mm. Cada uno se abre con una
-  // variante aleatoria (gen). El icono se usa en la lista.
-  // (Se quitó "comparar (¿cuál es más largo?)": no estaba en el examen real
-  //  —allí se compara por DIFERENCIA, que ya cubre la resta— y con barras
-  //  proporcionales se resolvía a ojo sin leer las medidas.)
-  window.MIDOKU_PROBLEM_TYPES = [
-    { id: "measureCm",   icon: "ruler",   gen: GEN.measureCm },
-    { id: "measureCmMm", icon: "ruler",   gen: GEN.measureCmMm },
-    { id: "setRuler",    icon: "ruler",   gen: GEN.setRuler },
-    { id: "toMm",        icon: "convert", gen: GEN.toMm },
-    { id: "toCm",        icon: "convert", gen: GEN.toCm },
-    { id: "mixedToMm",   icon: "convert", gen: GEN.mixedToMm },
-    { id: "add",         icon: "plus",    gen: GEN.add },
-    { id: "subtract",    icon: "minus",   gen: GEN.subtract },
-  ];
+  /* ── Generadores de sumas enteras (1-2º curso) ──────────────
+     Operandos ≤ 999, resultado ≤ 1998 (4 dígitos).
+     Niveles: sin llevadas (2 díg.) · con llevadas (2-3 díg.) · grandes (3 díg.). */
+  // dígitos sin llevada en la columna (a+b ≤ 9). Para "sin llevada" en 2 cifras
+  // generamos U y D de cada operando con ese criterio.
+  const digitsNoCarry = () => {
+    const u1 = ri(1, 8), u2 = ri(1, 9 - u1);
+    const d1 = ri(1, 8), d2 = ri(1, 9 - d1);
+    return [d1 * 10 + u1, d2 * 10 + u2];
+  };
+  // Suma con llevada garantizada en algún punto. Aceptamos 2 o 3 dígitos.
+  const addWithCarry = () => {
+    let a, b, tries = 0;
+    do {
+      const small = Math.random() < 0.5;
+      a = small ? ri(15, 99) : ri(50, 499);
+      b = small ? ri(15, 99) : ri(50, 499);
+      tries++;
+    } while (!hasCarry(a, b) && tries < 10);
+    if (!hasCarry(a, b)) { a = 47; b = 38; } // fallback determinista
+    return [a, b];
+  };
+  // ¿produce alguna llevada al sumar columna a columna?
+  const hasCarry = (a, b) => {
+    while (a > 0 || b > 0) {
+      if ((a % 10) + (b % 10) >= 10) return true;
+      a = Math.floor(a / 10); b = Math.floor(b / 10);
+    }
+    return false;
+  };
+
+  const ADD = {
+    addBasic: () => { const [a, b] = digitsNoCarry(); return { type: "intAdd", a, b }; },
+    addCarry: () => { const [a, b] = addWithCarry();  return { type: "intAdd", a, b }; },
+    // 3 dígitos: cada operando 100-999. Resultado ≤ 1998.
+    addBig:   () => ({ type: "intAdd", a: ri(100, 999), b: ri(100, 999) }),
+  };
+
+  /* ── Generadores de restas enteras (1-2º curso) ─────────────
+     a ≥ b siempre; resultado positivo. */
+  const subDigitsNoBorrow = () => {
+    // a ≥ b en cada columna (sin préstamo). Generamos b primero, luego a.
+    const u_b = ri(0, 8), u_a = ri(u_b + 1, 9);
+    const d_b = ri(1, 8), d_a = ri(d_b + 1, 9);
+    return [d_a * 10 + u_a, d_b * 10 + u_b];
+  };
+  const hasBorrow = (a, b) => {
+    while (b > 0) {
+      if ((a % 10) < (b % 10)) return true;
+      a = Math.floor(a / 10); b = Math.floor(b / 10);
+    }
+    return false;
+  };
+  const subWithBorrow = () => {
+    let a, b, tries = 0;
+    do {
+      const small = Math.random() < 0.5;
+      a = small ? ri(20, 99) : ri(100, 999);
+      b = small ? ri(11, a - 1) : ri(20, a - 1);
+      tries++;
+    } while (!hasBorrow(a, b) && tries < 10);
+    if (!hasBorrow(a, b)) { a = 52; b = 17; }
+    return [a, b];
+  };
+  const SUB = {
+    subBasic: () => { const [a, b] = subDigitsNoBorrow(); return { type: "intSub", a, b }; },
+    subBorrow: () => { const [a, b] = subWithBorrow();    return { type: "intSub", a, b }; },
+    subBig: () => {
+      const a = ri(200, 999);
+      const b = ri(100, a - 50);
+      return { type: "intSub", a, b };
+    },
+  };
+
+  /* ── Catálogo por lección ──────────────────────────────────
+     Cada problema tiene id (único en la lección), icon y gen. */
+  window.MIDOKU_PROBLEMS_BY_LESSON = {
+    units: [
+      { id: "measureCm",   icon: "ruler",   gen: UNITS.measureCm },
+      { id: "measureCmMm", icon: "ruler",   gen: UNITS.measureCmMm },
+      { id: "setRuler",    icon: "ruler",   gen: UNITS.setRuler },
+      { id: "toMm",        icon: "convert", gen: UNITS.toMm },
+      { id: "toCm",        icon: "convert", gen: UNITS.toCm },
+      { id: "mixedToMm",   icon: "convert", gen: UNITS.mixedToMm },
+      { id: "add",         icon: "plus",    gen: UNITS.add },
+      { id: "subtract",    icon: "minus",   gen: UNITS.subtract },
+    ],
+    add: [
+      { id: "addBasic", icon: "plus", gen: ADD.addBasic },
+      { id: "addCarry", icon: "plus", gen: ADD.addCarry },
+      { id: "addBig",   icon: "plus", gen: ADD.addBig },
+    ],
+    subtract: [
+      { id: "subBasic",  icon: "minus", gen: SUB.subBasic },
+      { id: "subBorrow", icon: "minus", gen: SUB.subBorrow },
+      { id: "subBig",    icon: "minus", gen: SUB.subBig },
+    ],
+  };
 
   // Genera una variante evitando que se repita ninguna de las ÚLTIMAS 3
-  // mostradas de ese tipo (aunque sea aleatorio, no sale lo mismo seguido).
+  // mostradas de ese tipo.
   const _recent = {};                          // id -> [firma, …] (máx 3)
-  const signature = (s) => {
-    const p = [s.type, s.ask];
-    ["object", "target", "from", "a", "b"].forEach(k => { if (s[k]) p.push(s[k].cm, s[k].mm); });
-    return p.join(",");
-  };
+  const signature = (s) => JSON.stringify([s.type, s.ask, s.a, s.b, s.object, s.target, s.from]);
   window.genProblem = function (problem) {
     const recent = _recent[problem.id] || (_recent[problem.id] = []);
     let inst, sig, tries = 0;
