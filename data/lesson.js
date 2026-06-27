@@ -65,10 +65,13 @@ window.fmtMeasure = (m) => {
 };
 
 // Catálogo de lecciones del curso 1-2年.
-// Orden didáctico: primero la aritmética básica (sumas → restas), luego
-// la lección de medida (cm/mm).
+// Orden didáctico: primero la aritmética básica (sumas → restas →
+// multiplicación → división), luego la lección de medida (cm/mm).
+// (cm/mm queda al final; en la Fase 2 se moverá a una sección "Medidas".)
 window.MIDOKU_LESSONS = [
-  { id: "add",      icon: "plus",  state: "active" },
-  { id: "subtract", icon: "minus", state: "active" },
-  { id: "units",    icon: "ruler", state: "active" },
+  { id: "add",      icon: "plus",   state: "active" },
+  { id: "subtract", icon: "minus",  state: "active" },
+  { id: "multiply", icon: "times",  state: "active" },
+  { id: "divide",   icon: "divide", state: "active" },
+  { id: "measures", icon: "measures", state: "active", group: true },
 ];

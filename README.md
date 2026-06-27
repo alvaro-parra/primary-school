@@ -21,6 +21,36 @@ La **regla interactiva** (`Ruler.jsx`, SVG) es el manipulable protagonista:
 muestra objetos medidos, cinta resaltada, marca de respuesta y un mango
 arrastrable para medir.
 
+## Aritmética (1-2年)
+Lecciones de cálculo pensadas para no asumir las tablas:
+- **Sumas** y **Restas** — a 2 cifras, sin llevada y con llevada/préstamo.
+- **Multiplicaciones** — 1 dígito × 1 dígito pequeño (con apoyo visual de
+  puntos) y ×10.
+- **Divisiones** — siempre exactas (sin resto): repartos pequeños y ÷10.
+
+Cada teoría incluye un **mini-widget interactivo** ("Pruébalo tú") para
+experimentar con dos números. Sumas y Multiplicaciones añaden una **tabla de
+consulta** (overlay) accesible desde un botón en la cabecera.
+
+## Medidas (1-2年)
+Sección "Medidas" (icono ×10) que agrupa tres sistemas, cada uno con su icono:
+- **Longitud** (m, cm, mm) — conserva la regla interactiva cm/mm.
+- **Masa** (g, kg).
+- **Capacidad** (L, dL, mL).
+
+Cada sistema arranca con su **set básico** de unidades; un botón **Unidades**
+abre un modal con la escalera completa (mm…km, mg…kg, mL…kL) y casillas para
+incluir las que se quieran (se guarda por sistema en `localStorage`). Un botón
+**Tabla de unidades** abre un modal con el símbolo y su lectura (katakana en
+日本語, nombre en español).
+
+El **conversor** de la teoría deja teclear un valor con flechas por unidad y lo
+muestra en cada agrupación de unidades sin decimales (p. ej. `1 L 0 dL 0 mL`,
+`10 dL 0 mL`, `1000 mL`). Los **ejercicios** generan conversiones a partir de las
+unidades activas (a la unidad pequeña, repartir en dos unidades, juntar en una).
+Los modales se renderizan con `ReactDOM.createPortal` a `document.body` para no
+quedar atrapados bajo ningún contexto de apilado.
+
 ## Gamificación
 Mapa de lecciones con nodos, barra de progreso, corazones/vidas, racha,
 barra de feedback acierto/error, y pantalla final con trofeo + estrellas + puntos.

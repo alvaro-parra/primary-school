@@ -7,6 +7,8 @@ function ProblemIcon({ kind, color = "var(--ink)" }) {
   if (kind === "compare") return <svg viewBox="0 0 24 24" width={28} height={28}><rect x="4" y="13" width="6" height="7" rx="1.5" fill={color}/><rect x="14" y="6" width="6" height="14" rx="1.5" fill={color}/></svg>;
   if (kind === "plus") return <svg viewBox="0 0 24 24" width={28} height={28}><path d="M 12 5 L 12 19 M 5 12 L 19 12" stroke={color} strokeWidth="3.4" strokeLinecap="round"/></svg>;
   if (kind === "minus") return <svg viewBox="0 0 24 24" width={28} height={28}><path d="M 5 12 L 19 12" stroke={color} strokeWidth="3.4" strokeLinecap="round"/></svg>;
+  if (kind === "times") return <svg viewBox="0 0 24 24" width={28} height={28}><path d="M 7 7 L 17 17 M 17 7 L 7 17" stroke={color} strokeWidth="3.4" strokeLinecap="round"/></svg>;
+  if (kind === "divide") return <svg viewBox="0 0 24 24" width={28} height={28}><path d="M 5 12 L 19 12" stroke={color} strokeWidth="3.4" strokeLinecap="round"/><circle cx="12" cy="7" r="1.7" fill={color}/><circle cx="12" cy="17" r="1.7" fill={color}/></svg>;
   return <svg viewBox="0 0 24 24" width={32} height={32}><rect x="3" y="8" width="18" height="9" rx="2" fill="none" stroke={color} strokeWidth="2.4"/>{[6,9,12,15,18].map((x,i)=><line key={i} x1={x} y1="8" x2={x} y2={i%2===0?"14":"11.5"} stroke={color} strokeWidth="1.8" strokeLinecap="round"/>)}</svg>;
 }
 
@@ -41,7 +43,7 @@ function ProblemList({ problems, solved, onBack, onPick, onReset, justCompleted,
       }/>
       <div style={{ position: "relative", zIndex: 2, display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-3)", padding: "var(--space-3) var(--space-5)", maxWidth: 560, margin: "0 auto" }}>
         {problems.map(p => (
-          <ProblemCard key={p.id} icon={p.icon} title={t("pn_" + p.id)} done={!!(solved && solved[p.id])} onClick={() => onPick(p.id)}/>
+          <ProblemCard key={p.id} icon={p.icon} title={p.nameKey ? t(p.nameKey) : t("pn_" + p.id)} done={!!(solved && solved[p.id])} onClick={() => onPick(p.id)}/>
         ))}
       </div>
       {confirm && (
@@ -109,7 +111,7 @@ function ProblemPlay({ problem, onBack, onSolved }) {
     <div style={{ position: "relative", height: "100dvh", minHeight: 540, display: "flex", flexDirection: "column" }}>
       <BgDecor/>
       <ScreenHeader onBack={onBack} center={
-        <h1 style={{ margin: 0, fontSize: "calc(20px * var(--scale))", fontWeight: 700 }}>{t("pn_" + problem.id)}</h1>
+        <h1 style={{ margin: 0, fontSize: "calc(20px * var(--scale))", fontWeight: 700, lineHeight: 1.15, textWrap: "balance" }}>{stepQuestion(inst)}</h1>
       }/>
       <div key={nonce} style={{
         flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch",
@@ -117,7 +119,9 @@ function ProblemPlay({ problem, onBack, onSolved }) {
         position: "relative", zIndex: 2, animation: "step-rise 280ms ease",
         maxWidth: 560, margin: "0 auto", width: "100%",
       }}>
-        <Exercise step={inst} apiRef={apiRef} onCanCheck={setCanCheck} phase={phase} result={result} slot={slotRef.current}/>
+        <QHideContext.Provider value={true}>
+          <Exercise step={inst} apiRef={apiRef} onCanCheck={setCanCheck} phase={phase} result={result} slot={slotRef.current}/>
+        </QHideContext.Provider>
       </div>
 
       {result === true && <Confetti active/>}

@@ -10,6 +10,33 @@
 
 const { mmOf, toCmMm, fmtMeasure } = window;
 
+// Cuando es true, las QuestionBar se ocultan (la pregunta se muestra en la
+// cabecera del reproductor de problemas para ahorrar espacio). La lección
+// guiada no usa el provider, así que ahí la QuestionBar sigue visible.
+const QHideContext = React.createContext(false);
+
+// Texto de la pregunta de un paso, para mostrarlo en la cabecera del problema.
+function stepQuestion(step) {
+  switch (step.type) {
+    case "measure": return t("howLong");
+    case "setRuler": return t("tapRuler") + " " + fmtMeasure(step.target);
+    case "convertToCm": return t("convertToCm");
+    case "convertToMm":
+    case "mixedToMm": return t("convertToMm");
+    case "compare": return t("whichLonger");
+    case "add": return t("addThem");
+    case "subtract": return t("subThem");
+    case "intAdd": return t("addNum");
+    case "intSub": return t("subNum");
+    case "intMul": return t("mulNum");
+    case "intDiv": return t("divNum");
+    case "mConvert": return t("mConvertQ");
+    case "mCompare": return t("mCompareQ");
+    case "mCalc": return step.op === "+" ? t("mAddQ") : t("mSubQ");
+    default: return "";
+  }
+}
+
 /* Hook de entrada numérica multi-slot. Persiste en `slot` (objeto estable
    por índice) para que la respuesta se conserve al navegar atrás/adelante. */
 function useNumEntry(slots, slot) {
@@ -28,8 +55,10 @@ function useNumEntry(slots, slot) {
   return { vals, active, setActive: setActiveP, push, del, clear, filled };
 }
 
-/* Barra de pregunta — solo título (sin voz por ahora). */
+/* Barra de pregunta — solo título (sin voz por ahora).
+   Se oculta cuando QHideContext es true (la pregunta va en la cabecera). */
 function QuestionBar({ children, onSpeak }) {
+  if (React.useContext(QHideContext)) return null;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", padding: "var(--space-2) var(--space-1)" }}>
       <h2 style={{ flex: 1, margin: 0, fontSize: "calc(23px * var(--scale))", fontWeight: 700, lineHeight: 1.2, textWrap: "pretty" }}>{children}</h2>
@@ -387,6 +416,77 @@ function IntOpExercise({ step, apiRef, onCanCheck, phase, slot }) {
   );
 }
 
+/* ── Apoyo visual de multiplicación: rejilla de a×b puntos ───── */
+function DotsArray({ rows, cols }) {
+  return (
+    <div style={{ display: "grid", gap: "calc(6px * var(--scale))", justifyContent: "center", padding: "var(--space-2) 0" }}>
+      {Array.from({ length: rows }).map((_, r) => (
+        <div key={r} style={{ display: "flex", gap: "calc(6px * var(--scale))", justifyContent: "center" }}>
+          {Array.from({ length: cols }).map((_, c) => (
+            <span key={c} style={{ width: "calc(20px * var(--scale))", height: "calc(20px * var(--scale))", borderRadius: "50%", background: "var(--secondary)", border: "2px solid var(--ink)" }}/>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Apoyo visual de división: a puntos repartidos en b grupos ── */
+function ShareGroups({ total, groups }) {
+  const per = Math.floor(total / groups);
+  return (
+    <div style={{ display: "flex", gap: "calc(8px * var(--scale))", justifyContent: "center", flexWrap: "wrap", padding: "var(--space-2) 0" }}>
+      {Array.from({ length: groups }).map((_, g) => (
+        <div key={g} style={{ display: "grid", gridTemplateColumns: "repeat(2, auto)", gap: "calc(5px * var(--scale))", padding: "calc(8px * var(--scale))", borderRadius: "var(--r-md)", border: "2px dashed var(--ink)", background: "var(--bg-2)" }}>
+          {Array.from({ length: per }).map((_, i) => (
+            <span key={i} style={{ width: "calc(18px * var(--scale))", height: "calc(18px * var(--scale))", borderRadius: "50%", background: "var(--primary)", border: "2px solid var(--ink)" }}/>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── INT MUL/DIV (multiplicación y división de enteros) ────────
+   Layout horizontal "a × b = [ ]" (números pequeños). Con apoyo visual
+   opcional: rejilla de puntos (×) o reparto en grupos (÷). */
+function IntMulDivExercise({ step, apiRef, onCanCheck, phase, slot }) {
+  const isMul = step.type === "intMul";
+  const answer = isMul ? step.a * step.b : step.a / step.b;
+  const maxDigits = String(answer).length;
+  const entry = useNumEntry([{ unit: "", max: maxDigits }], slot);
+  useEffect(() => {
+    apiRef.current = {
+      correctLabel: String(answer),
+      check: () => Number(entry.vals[0]) === answer,
+    };
+  });
+  useEffect(() => { onCanCheck(entry.filled); }, [entry.filled]);
+  const fState = phase !== "checked" ? null : (Number(entry.vals[0]) === answer ? "ok" : "ng");
+
+  const numStyle = { fontSize: "calc(40px * var(--scale))", fontWeight: 700, lineHeight: 1.05 };
+  const opColor = isMul ? "var(--secondary-strong)" : "var(--primary-strong)";
+
+  return (
+    <div style={{ display: "grid", gap: "var(--space-4)" }}>
+      <QuestionBar>{isMul ? t("mulNum") : t("divNum")}</QuestionBar>
+      {step.support && (isMul
+        ? <DotsArray rows={step.a} cols={step.b}/>
+        : <ShareGroups total={step.a} groups={step.b}/>)}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "calc(12px * var(--scale))", flexWrap: "wrap", padding: "var(--space-3) 0" }}>
+        <span className="math-num" style={numStyle}>{step.a}</span>
+        <span className="math-num" style={{ ...numStyle, color: opColor }}>{isMul ? "×" : "÷"}</span>
+        <span className="math-num" style={numStyle}>{step.b}</span>
+        <span className="math-num" style={{ ...numStyle, color: "var(--ink-soft)" }}>=</span>
+        <AnswerField value={entry.vals[0]} unit=""
+          active={phase === "input"} state={fState}
+          onFocus={phase === "input" ? () => entry.setActive(0) : null}/>
+      </div>
+      <NumberPad onDigit={entry.push} onDelete={entry.del} onClear={entry.clear} disabled={phase === "checked"}/>
+    </div>
+  );
+}
+
 /* ── Dispatcher ────────────────────────────────────────────── */
 function Exercise(props) {
   const { step } = props;
@@ -402,8 +502,13 @@ function Exercise(props) {
     case "subtract": return <SubtractExercise {...props}/>;
     case "intAdd":
     case "intSub": return <IntOpExercise {...props}/>;
+    case "intMul":
+    case "intDiv": return <IntMulDivExercise {...props}/>;
+    case "mConvert": return <MeasureConvertExercise {...props}/>;
+    case "mCompare": return <MeasureCompareExercise {...props}/>;
+    case "mCalc": return <MeasureCalcExercise {...props}/>;
     default: return <div>?</div>;
   }
 }
 
-Object.assign(window, { Exercise, CmZoom, MeasureExpr });
+Object.assign(window, { Exercise, CmZoom, MeasureExpr, DotsArray, ShareGroups, QHideContext, stepQuestion });

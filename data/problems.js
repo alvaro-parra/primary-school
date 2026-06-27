@@ -63,8 +63,6 @@
   const ADD = {
     addBasic: () => { const [a, b] = digitsNoCarry(); return { type: "intAdd", a, b }; },
     addCarry: () => { const [a, b] = addWithCarry();  return { type: "intAdd", a, b }; },
-    // 3 dígitos: cada operando 100-999. Resultado ≤ 1998.
-    addBig:   () => ({ type: "intAdd", a: ri(100, 999), b: ri(100, 999) }),
   };
 
   /* ── Generadores de restas enteras (1-2º curso) ─────────────
@@ -96,11 +94,28 @@
   const SUB = {
     subBasic: () => { const [a, b] = subDigitsNoBorrow(); return { type: "intSub", a, b }; },
     subBorrow: () => { const [a, b] = subWithBorrow();    return { type: "intSub", a, b }; },
-    subBig: () => {
-      const a = ri(200, 999);
-      const b = ri(100, a - 50);
-      return { type: "intSub", a, b };
+  };
+
+  /* ── Generadores de multiplicación (1-2º curso) ─────────────
+     El niño puede no saber las tablas. Empezamos pequeño y con apoyo
+     visual; ×10 prepara el terreno para el sistema métrico. */
+  const MUL = {
+    // 1 díg × 1 díg pequeños (factores 1..5 → producto ≤ 25). Con rejilla.
+    mulSmall: () => ({ type: "intMul", a: ri(1, 5), b: ri(1, 5), support: true }),
+    // n × 10: añadir un cero. Base de la escalera métrica.
+    mulTen: () => ({ type: "intMul", a: ri(1, 9), b: 10 }),
+  };
+
+  /* ── Generadores de división (1-2º curso) ───────────────────
+     SIEMPRE exactas (resto 0; el concepto de resto queda lejos). */
+  const DIV = {
+    // a ÷ b exacta: elegimos divisor y cociente pequeños y multiplicamos.
+    divSmall: () => {
+      const b = ri(2, 5), q = ri(2, 5);
+      return { type: "intDiv", a: b * q, b, support: true };
     },
+    // múltiplos de 10 ÷ 10: quitar un cero.
+    divTen: () => ({ type: "intDiv", a: ri(1, 9) * 10, b: 10 }),
   };
 
   /* ── Catálogo por lección ──────────────────────────────────
@@ -119,12 +134,18 @@
     add: [
       { id: "addBasic", icon: "plus", gen: ADD.addBasic },
       { id: "addCarry", icon: "plus", gen: ADD.addCarry },
-      { id: "addBig",   icon: "plus", gen: ADD.addBig },
     ],
     subtract: [
       { id: "subBasic",  icon: "minus", gen: SUB.subBasic },
       { id: "subBorrow", icon: "minus", gen: SUB.subBorrow },
-      { id: "subBig",    icon: "minus", gen: SUB.subBig },
+    ],
+    multiply: [
+      { id: "mulSmall", icon: "times", gen: MUL.mulSmall },
+      { id: "mulTen",   icon: "times", gen: MUL.mulTen },
+    ],
+    divide: [
+      { id: "divSmall", icon: "divide", gen: DIV.divSmall },
+      { id: "divTen",   icon: "divide", gen: DIV.divTen },
     ],
   };
 

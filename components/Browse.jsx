@@ -9,6 +9,11 @@ function MiniIcon({ kind }) {
   if (kind === "lock") return <svg viewBox="0 0 24 24" width={26} height={26}><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke={c} strokeWidth="2.5"/><path d="M 8 11 L 8 8 Q 8 4 12 4 Q 16 4 16 8 L 16 11" fill="none" stroke={c} strokeWidth="2.5"/></svg>;
   if (kind === "plus") return <svg viewBox="0 0 24 24" width={30} height={30}><path d="M 12 5 L 12 19 M 5 12 L 19 12" stroke={c} strokeWidth="3.5" strokeLinecap="round"/></svg>;
   if (kind === "minus") return <svg viewBox="0 0 24 24" width={30} height={30}><path d="M 5 12 L 19 12" stroke={c} strokeWidth="3.5" strokeLinecap="round"/></svg>;
+  if (kind === "times") return <svg viewBox="0 0 24 24" width={30} height={30}><path d="M 7 7 L 17 17 M 17 7 L 7 17" stroke={c} strokeWidth="3.5" strokeLinecap="round"/></svg>;
+  if (kind === "divide") return <svg viewBox="0 0 24 24" width={30} height={30}><path d="M 5 12 L 19 12" stroke={c} strokeWidth="3.5" strokeLinecap="round"/><circle cx="12" cy="7" r="1.9" fill={c}/><circle cx="12" cy="17" r="1.9" fill={c}/></svg>;
+  if (kind === "scale") return <svg viewBox="0 0 24 24" width={30} height={30}><path d="M4 7 h16 M12 7 v12 M8 20 h8" stroke={c} strokeWidth="2.4" fill="none" strokeLinecap="round"/><path d="M4 7 L2 13 a3 3 0 0 0 6 0 Z M20 7 L18 13 a3 3 0 0 0 6 0 Z" fill="none" stroke={c} strokeWidth="2"/></svg>;
+  if (kind === "drop") return <svg viewBox="0 0 24 24" width={28} height={28}><path d="M12 3 C12 3 5 11 5 15 a7 7 0 0 0 14 0 C19 11 12 3 12 3 Z" fill="none" stroke={c} strokeWidth="2.4" strokeLinejoin="round"/></svg>;
+  if (kind === "measures") return <svg viewBox="0 0 24 24" width={30} height={30} fill="none" stroke={c} strokeWidth="2.6" strokeLinecap="round"><line x1="5" y1="20" x2="5" y2="13"/><line x1="12" y1="20" x2="12" y2="9"/><line x1="19" y1="20" x2="19" y2="5"/><line x1="3" y1="20" x2="21" y2="20"/></svg>;
   if (kind === "compare") return <svg viewBox="0 0 24 24" width={28} height={28}><rect x="4" y="13" width="6" height="7" rx="1.5" fill={c}/><rect x="14" y="6" width="6" height="14" rx="1.5" fill={c}/></svg>;
   return <svg viewBox="0 0 24 24" width={32} height={32}><rect x="3" y="8" width="18" height="9" rx="2" fill="none" stroke={c} strokeWidth="2.5"/>{[6,9,12,15,18].map((x,i)=><line key={i} x1={x} y1="8" x2={x} y2={i%2===0?"14":"11.5"} stroke={c} strokeWidth="2" strokeLinecap="round"/>)}</svg>;
 }
@@ -17,6 +22,12 @@ function lessonTitle(id) {
   if (id === "units") return t("lesson_units");
   if (id === "add") return t("lesson_add");
   if (id === "subtract") return t("lesson_subtract");
+  if (id === "multiply") return t("lesson_multiply");
+  if (id === "divide") return t("lesson_divide");
+  if (id === "measures") return t("lesson_measures");
+  if (id === "length") return t("lesson_length");
+  if (id === "mass") return t("lesson_mass");
+  if (id === "capacity") return t("lesson_capacity");
   if (id === "addRuler") return t("lesson_addRuler");
   if (id === "compareLen") return t("lesson_compareLen");
   return id;
@@ -25,6 +36,12 @@ function lessonSub(id) {
   if (id === "units") return t("unit_sub");
   if (id === "add") return t("add_sub");
   if (id === "subtract") return t("sub_sub");
+  if (id === "multiply") return t("mul_sub");
+  if (id === "divide") return t("div_sub");
+  if (id === "measures") return t("measures_sub");
+  if (id === "length") return t("length_sub");
+  if (id === "mass") return t("mass_sub");
+  if (id === "capacity") return t("capacity_sub");
   return t("locked");
 }
 
@@ -43,7 +60,7 @@ function LessonList({ onBack, onPick, completed }) {
           const locked = state === "locked";
           return (
             <LessonRow key={l.id} title={lessonTitle(l.id)} sub={lessonSub(l.id)}
-              icon={done ? "check" : locked ? "lock" : l.icon} locked={locked} done={done}
+              icon={locked ? "lock" : l.icon} locked={locked} done={done}
               onClick={() => !locked && onPick(l.id)}/>
           );
         })}
@@ -124,8 +141,6 @@ const INTRO_CONTENT = {
       s_carry: "Suma con llevadas",
       carry_text: "Si una columna pasa de 9, escribes la unidad y te llevas 1 a la columna siguiente.",
       carry_hint: "Aquí 7 + 8 = 15: escribimos 5 y nos llevamos 1.",
-      s_big: "Números grandes",
-      big: "Funciona igual con números de 3 o 4 cifras: alinea bien y suma columna por columna.",
     },
     ja: {
       intro: "たしざんは ふたつの かずを あつめる ことです。くらいを そろえて、いちのくらい から たします。",
@@ -134,8 +149,6 @@ const INTRO_CONTENT = {
       s_carry: "くりあがり あり",
       carry_text: "ある くらいで 9を こえたら、いち を かいて、つぎの くらいに 1を くりあげます。",
       carry_hint: "ここでは 7 + 8 = 15。 5 を かいて、1 を くりあげます。",
-      s_big: "おおきい かず",
-      big: "3けた や 4けた でも おなじ。くらいを そろえて くらい ごとに たします。",
     },
   },
   subtract: {
@@ -146,8 +159,6 @@ const INTRO_CONTENT = {
       s_borrow: "Resta con préstamo",
       borrow_text: "Si arriba no llega, le pides 10 a la columna siguiente.",
       borrow_hint: "Aquí 2 − 7 no puede; tomamos 1 decena: 12 − 7 = 5, y la columna de al lado pierde 1.",
-      s_big: "Números grandes",
-      big: "Funciona igual con 3 o 4 cifras: alinea bien y resta columna por columna.",
     },
     ja: {
       intro: "ひきざんは へらす ことです。くらいを そろえて、いちのくらい から ひきます。",
@@ -156,8 +167,42 @@ const INTRO_CONTENT = {
       s_borrow: "くりさがり あり",
       borrow_text: "うえが たりない ときは、となりの くらい から 10 を かります。",
       borrow_hint: "ここでは 2 − 7 が できないので、となり から 1 を かりて 12 − 7 = 5。",
-      s_big: "おおきい かず",
-      big: "3けた や 4けた でも おなじ。くらいを そろえて くらい ごとに ひきます。",
+    },
+  },
+  multiply: {
+    es: {
+      intro: "Multiplicar es sumar el mismo número varias veces. 3 × 4 son 3 grupos de 4.",
+      s_basic: "Grupos iguales",
+      basic: "3 × 4 = 4 + 4 + 4 = 12. Cuenta los puntos para comprobarlo.",
+      s_ten: "Multiplicar por 10",
+      ten_text: "Para multiplicar por 10, añade un cero al número.",
+      ten_hint: "3 × 10 = 30. ¡Muy útil para las medidas!",
+    },
+    ja: {
+      intro: "かけざんは おなじ かずを なんかいも たす ことです。3 × 4 は 4が 3つ。",
+      s_basic: "おなじ かずの まとまり",
+      basic: "3 × 4 = 4 + 4 + 4 = 12。てんを かぞえて たしかめよう。",
+      s_ten: "10を かける",
+      ten_text: "10を かける ときは、かずの うしろに 0を つけます。",
+      ten_hint: "3 × 10 = 30。たんいの べんきょうに とても やくだつよ！",
+    },
+  },
+  divide: {
+    es: {
+      intro: "Dividir es repartir en partes iguales. 12 ÷ 3 reparte 12 en 3 grupos.",
+      s_basic: "Repartir por igual",
+      basic: "12 ÷ 3 = 4: a cada grupo le tocan 4. Todas nuestras divisiones son exactas, sin sobras.",
+      s_ten: "Dividir entre 10",
+      ten_text: "Para dividir entre 10 un número acabado en 0, le quitas un cero.",
+      ten_hint: "30 ÷ 10 = 3. Es lo contrario de multiplicar por 10.",
+    },
+    ja: {
+      intro: "わりざんは おなじ かずに わける ことです。12 ÷ 3 は 12を 3つに わけます。",
+      s_basic: "おなじ かずに わける",
+      basic: "12 ÷ 3 = 4：1つの まとまりは 4こ。わりざんは いつも ちょうど わりきれる（あまり なし）。",
+      s_ten: "10で わる",
+      ten_text: "0で おわる かずを 10で わる ときは、0を ひとつ とります。",
+      ten_hint: "30 ÷ 10 = 3。10を かける はんたいだよ。",
     },
   },
 };
@@ -281,12 +326,7 @@ function AddIntroBody({ c }) {
         <NoteHint>{c.carry_hint}</NoteHint>
       </IntroSection>
 
-      <IntroSection title={c.s_big}>
-        <p style={{ margin: "0 0 var(--space-2)", fontSize: "calc(15px * var(--scale))", fontWeight: 600, color: "var(--ink-soft)" }}>{c.big}</p>
-        <IntOpRow a={1325} op="+" b={2461} c={3786} opColor="var(--ok)"/>
-        <div style={{ height: 1, background: "var(--bg-2)", margin: "var(--space-2) 0" }}/>
-        <IntOpRow a={4827} op="+" b={3596} c={8423} opColor="var(--ok)"/>
-      </IntroSection>
+      <TryItWidget op="+"/>
     </>
   );
 }
@@ -308,25 +348,199 @@ function SubtractIntroBody({ c }) {
         <NoteHint>{c.borrow_hint}</NoteHint>
       </IntroSection>
 
-      <IntroSection title={c.s_big}>
-        <p style={{ margin: "0 0 var(--space-2)", fontSize: "calc(15px * var(--scale))", fontWeight: 600, color: "var(--ink-soft)" }}>{c.big}</p>
-        <IntOpRow a={3786} op="−" b={1325} c={2461} opColor="var(--ng)"/>
-        <div style={{ height: 1, background: "var(--bg-2)", margin: "var(--space-2) 0" }}/>
-        <IntOpRow a={8423} op="−" b={3596} c={4827} opColor="var(--ng)"/>
-      </IntroSection>
+      <TryItWidget op="−"/>
     </>
   );
 }
 
+/* Cuerpo de la lección de multiplicación. */
+function MultiplyIntroBody({ c }) {
+  return (
+    <>
+      <IntroSection title={c.s_basic}>
+        <p style={{ margin: "0 0 var(--space-2)", fontSize: "calc(15px * var(--scale))", fontWeight: 600, color: "var(--ink-soft)" }}>{c.basic}</p>
+        <DotsArray rows={3} cols={4}/>
+        <IntOpRow a={3} op="×" b={4} c={12} opColor="var(--secondary-strong)"/>
+      </IntroSection>
+
+      <IntroSection title={c.s_ten}>
+        <p style={{ margin: "0 0 var(--space-2)", fontSize: "calc(15px * var(--scale))", fontWeight: 600, color: "var(--ink-soft)" }}>{c.ten_text}</p>
+        <NoteHint>{c.ten_hint}</NoteHint>
+        {/* Tabla del 10 como caso especial: el 10 va a la derecha (k × 10). */}
+        <div style={{ maxWidth: 240, margin: "var(--space-3) auto 0" }}>
+          <EqTable op="×" title={tableLabel("×", 10)} rows={mulTableRows(10, 1, 10, false)}/>
+        </div>
+      </IntroSection>
+
+      <TryItWidget op="×"/>
+    </>
+  );
+}
+
+/* Cuerpo de la lección de división (siempre exacta). */
+function DivideIntroBody({ c }) {
+  return (
+    <>
+      <IntroSection title={c.s_basic}>
+        <p style={{ margin: "0 0 var(--space-2)", fontSize: "calc(15px * var(--scale))", fontWeight: 600, color: "var(--ink-soft)" }}>{c.basic}</p>
+        <ShareGroups total={12} groups={3}/>
+        <IntOpRow a={12} op="÷" b={3} c={4} opColor="var(--primary-strong)"/>
+      </IntroSection>
+
+      <IntroSection title={c.s_ten}>
+        <p style={{ margin: "0 0 var(--space-2)", fontSize: "calc(15px * var(--scale))", fontWeight: 600, color: "var(--ink-soft)" }}>{c.ten_text}</p>
+        <IntOpRow a={30} op="÷" b={10} c={3} opColor="var(--primary-strong)"/>
+        <NoteHint>{c.ten_hint}</NoteHint>
+      </IntroSection>
+
+      <TryItWidget op="÷"/>
+    </>
+  );
+}
+
+/* ── Mini-widget interactivo de la teoría ──────────────────────
+   El niño ajusta dos números con + / − y ve el resultado en vivo.
+   Para ÷ los selectores son "grupos" y "en cada uno" → siempre exacto. */
+function Stepper({ value, min, max, onChange }) {
+  const btn = (label, onClick, disabled) => (
+    <button onClick={onClick} disabled={disabled} aria-label={label}
+      style={{ width: "calc(36px * var(--scale))", height: "calc(36px * var(--scale))", borderRadius: "var(--r-md)", border: "3px solid var(--ink)", background: "var(--surface)", boxShadow: disabled ? "none" : "0 3px 0 var(--ink)", fontSize: "calc(20px * var(--scale))", fontWeight: 800, lineHeight: 1, opacity: disabled ? 0.4 : 1, cursor: disabled ? "default" : "pointer" }}>
+      {label}
+    </button>
+  );
+  return (
+    <div style={{ display: "grid", justifyItems: "center", gap: "calc(6px * var(--scale))" }}>
+      {btn("+", () => onChange(Math.min(max, value + 1)), value >= max)}
+      <span className="math-num" style={{ fontSize: "calc(34px * var(--scale))", fontWeight: 700, minWidth: "calc(30px * var(--scale))", textAlign: "center" }}>{value}</span>
+      {btn("−", () => onChange(Math.max(min, value - 1)), value <= min)}
+    </div>
+  );
+}
+
+function TryItWidget({ op }) {
+  const isDiv = op === "÷";
+  const [v1, setV1] = useState(isDiv ? 3 : 2);   // ÷: nº de grupos
+  const [v2, setV2] = useState(isDiv ? 4 : 3);   // ÷: en cada grupo
+  const min = isDiv ? 1 : 0;
+
+  // Para la resta mostramos siempre mayor − menor (sin negativos).
+  const a = op === "−" ? Math.max(v1, v2) : (isDiv ? v1 * v2 : v1);
+  const b = op === "−" ? Math.min(v1, v2) : (isDiv ? v1 : v2);
+  const result = op === "+" ? a + b : op === "−" ? a - b : op === "×" ? a * b : a / b;
+  const opColor = op === "+" ? "var(--ok)" : op === "−" ? "var(--ng)" : op === "×" ? "var(--secondary-strong)" : "var(--primary-strong)";
+
+  return (
+    <IntroSection title={t("try_it")}>
+      <div style={{ display: "flex", justifyContent: "center", gap: "calc(20px * var(--scale))", padding: "var(--space-2) 0 var(--space-3)" }}>
+        <Stepper value={v1} min={min} max={9} onChange={setV1}/>
+        <Stepper value={v2} min={min} max={9} onChange={setV2}/>
+      </div>
+      {op === "×" && <DotsArray rows={a} cols={b}/>}
+      {op === "÷" && <ShareGroups total={a} groups={b}/>}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "calc(8px * var(--scale))", flexWrap: "wrap", paddingTop: "var(--space-2)" }}>
+        <span className="math-num" style={{ fontSize: "calc(30px * var(--scale))", fontWeight: 700 }}>{a}</span>
+        <span className="math-num" style={{ fontSize: "calc(26px * var(--scale))", fontWeight: 700, color: opColor }}>{op}</span>
+        <span className="math-num" style={{ fontSize: "calc(30px * var(--scale))", fontWeight: 700 }}>{b}</span>
+        <span className="math-num" style={{ fontSize: "calc(26px * var(--scale))", fontWeight: 700, color: "var(--ink-soft)" }}>=</span>
+        <span className="math-num" style={{ fontSize: "calc(34px * var(--scale))", fontWeight: 800, color: "var(--ink)" }}>{result}</span>
+      </div>
+    </IntroSection>
+  );
+}
+
+/* ── Tablas de consulta en formato clásico "tabla del n" ─────────
+   Cada tabla es una lista de ecuaciones, grande y legible, en lugar de
+   una rejilla apretada. */
+const seq = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+// Filas de la tabla de multiplicar de n. baseLeft=false pone n a la derecha
+// (caso especial del 10: 1×10, 2×10, …).
+function mulTableRows(n, kFrom, kTo, baseLeft) {
+  return seq(kFrom, kTo).map(k => baseLeft
+    ? { a: n, op: "×", b: k, c: n * k }
+    : { a: k, op: "×", b: n, c: k * n });
+}
+// Filas de la tabla de sumar de n: n+0, n+1, …
+function addTableRows(n, kFrom, kTo) {
+  return seq(kFrom, kTo).map(k => ({ a: n, op: "+", b: k, c: n + k }));
+}
+// Título de cada tabla según idioma (japonés: "Nの だん").
+function tableLabel(op, n) {
+  if (getLang() === "ja") return op === "×" ? `${n}の だん` : `${n}の たしざん`;
+  return `Tabla del ${n}`;
+}
+
+function EqRow({ a, op, b, c, opColor }) {
+  const big = { fontSize: "calc(18px * var(--scale))", fontWeight: 700 };
+  return (
+    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: "calc(5px * var(--scale))", padding: "calc(3px * var(--scale)) 0" }}>
+      <span className="math-num" style={{ ...big, minWidth: "1.6em", textAlign: "right" }}>{a}</span>
+      <span className="math-num" style={{ fontSize: "calc(15px * var(--scale))", fontWeight: 700, color: opColor }}>{op}</span>
+      <span className="math-num" style={{ ...big, minWidth: "1.6em" }}>{b}</span>
+      <span className="math-num" style={{ fontSize: "calc(15px * var(--scale))", fontWeight: 700, color: "var(--ink-soft)" }}>=</span>
+      <span className="math-num" style={{ fontSize: "calc(20px * var(--scale))", fontWeight: 800, minWidth: "1.6em" }}>{c}</span>
+    </div>
+  );
+}
+
+function EqTable({ title, rows, op }) {
+  const opColor = op === "+" ? "var(--ok)" : "var(--secondary-strong)";
+  return (
+    <div style={{ background: "var(--surface)", border: "3px solid var(--ink)", borderRadius: "var(--r-lg)", boxShadow: "var(--shadow-sm)", padding: "var(--space-3) var(--space-2) var(--space-4)" }}>
+      <div style={{ textAlign: "center", fontWeight: 800, fontSize: "calc(15px * var(--scale))", marginBottom: "var(--space-2)", color: "var(--ink-soft)" }}>{title}</div>
+      {rows.map((r, i) => <EqRow key={i} {...r} opColor={opColor}/>)}
+    </div>
+  );
+}
+
+// Vista de consulta: tablas del 1 al 9 en una rejilla adaptable.
+function RefTable({ op }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "var(--space-3)", maxWidth: 560, margin: "0 auto" }}>
+      {seq(1, 9).map(n => (
+        <EqTable key={n} op={op} title={tableLabel(op, n)}
+          rows={op === "+" ? addTableRows(n, 0, 9) : mulTableRows(n, 1, 9, true)}/>
+      ))}
+    </div>
+  );
+}
+
+function TablesOverlay({ op, title, onClose }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 60, background: "var(--bg)", display: "flex", flexDirection: "column" }}>
+      <ScreenHeader onBack={onClose} center={
+        <h1 style={{ margin: 0, fontSize: "calc(20px * var(--scale))", fontWeight: 700 }}>{title}</h1>
+      }/>
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "var(--space-4) var(--space-4) var(--space-7)" }}>
+        <RefTable op={op}/>
+      </div>
+    </div>
+  );
+}
+
+// ¿Qué tabla corresponde a cada lección? (solo sumas y multiplicación)
+function lessonTable(id) {
+  if (id === "add") return { op: "+", title: t("table_add") };
+  if (id === "multiply") return { op: "×", title: t("table_mul") };
+  return null;
+}
+
 function LessonIntro({ lessonId, onBack, onStart }) {
   const lang = getLang();
+  const isMeasure = (window.MIDOKU_MEASURE_IDS || []).includes(lessonId);
   const pack = (INTRO_CONTENT[lessonId] && (INTRO_CONTENT[lessonId][lang] || INTRO_CONTENT[lessonId].es)) || INTRO_CONTENT.units.es;
+  const tbl = lessonTable(lessonId);
+  const [showTable, setShowTable] = useState(false);
   return (
     <div style={{ position: "relative", height: "100dvh", display: "flex", flexDirection: "column" }}>
       <BgDecor/>
       <ScreenHeader onBack={onBack} center={
         <h1 style={{ margin: 0, fontSize: "calc(20px * var(--scale))", fontWeight: 700, lineHeight: 1.1 }}>{lessonTitle(lessonId)}</h1>
-      }/>
+      } right={tbl && (
+        <button onClick={() => setShowTable(true)} aria-label={t("tables")}
+          style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--surface)", border: "3px solid var(--ink)", boxShadow: "0 3px 0 var(--ink)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+          <svg viewBox="0 0 24 24" width={20} height={20}><rect x="4" y="4" width="16" height="16" rx="2.5" fill="none" stroke="var(--ink)" strokeWidth="2.2"/><path d="M 4 10 L 20 10 M 4 15 L 20 15 M 10 4 L 10 20 M 15 4 L 15 20" stroke="var(--ink)" strokeWidth="1.8"/></svg>
+        </button>
+      )}/>
 
       {/* Botón arriba que lleva a los ejercicios */}
       <div style={{ padding: "0 var(--space-5) var(--space-3)", position: "relative", zIndex: 3, maxWidth: 560, margin: "0 auto", width: "100%" }}>
@@ -339,12 +553,17 @@ function LessonIntro({ lessonId, onBack, onStart }) {
       <div style={{ flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", position: "relative", zIndex: 2,
         padding: "var(--space-2) var(--space-5) var(--space-7)", display: "grid", gap: "var(--space-4)", maxWidth: 560, margin: "0 auto", width: "100%" }}>
 
-        <p style={{ margin: 0, fontSize: "calc(17px * var(--scale))", fontWeight: 600, lineHeight: 1.45, color: "var(--ink-soft)", textWrap: "pretty" }}>{pack.intro}</p>
+        {!isMeasure && <p style={{ margin: 0, fontSize: "calc(17px * var(--scale))", fontWeight: 600, lineHeight: 1.45, color: "var(--ink-soft)", textWrap: "pretty" }}>{pack.intro}</p>}
 
         {lessonId === "add" && <AddIntroBody c={pack}/>}
         {lessonId === "subtract" && <SubtractIntroBody c={pack}/>}
+        {lessonId === "multiply" && <MultiplyIntroBody c={pack}/>}
+        {lessonId === "divide" && <DivideIntroBody c={pack}/>}
         {lessonId === "units" && <UnitsIntroBody c={pack}/>}
+        {isMeasure && <MeasureIntroBody lessonId={lessonId}/>}
       </div>
+
+      {tbl && showTable && <TablesOverlay op={tbl.op} title={tbl.title} onClose={() => setShowTable(false)}/>}
     </div>
   );
 }

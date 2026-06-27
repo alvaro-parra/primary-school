@@ -31,6 +31,9 @@ function App() {
     const s = solved[lid] || {};
     completed[lid] = list.length > 0 && list.every(p => s[p.id]);
   }
+  // El grupo "Medidas" se completa cuando lo están sus tres sistemas.
+  const measureIds = window.MIDOKU_MEASURE_IDS || [];
+  completed.measures = measureIds.length > 0 && measureIds.every(id => completed[id]);
 
   // Aplica tema y escala al documento.
   useEffect(() => {
@@ -54,7 +57,12 @@ function App() {
   }, [tw.ruler]);
 
   const openGrade = () => setRoute("list");
-  const pickLesson = (id) => { setActiveLesson(id); setRoute("intro"); };
+  const isMeasureLeaf = (id) => (window.MIDOKU_MEASURE_IDS || []).includes(id);
+  const pickLesson = (id) => {
+    if (id === "measures") { setRoute("measures"); return; }   // grupo → sublista
+    setActiveLesson(id); setRoute("intro");
+  };
+  const pickMeasure = (id) => { setActiveLesson(id); setRoute("intro"); };
   const openProblems = () => setRoute("problems");
   const pickProblem = (id) => { setActiveProblem(id); setRoute("play"); };
   const [justCompleted, setJustCompleted] = useState(false);
@@ -85,7 +93,10 @@ function App() {
     screen = <ProblemList problems={problemTypes} solved={solved[activeLesson] || {}} onBack={() => setRoute("intro")} onPick={pickProblem} onReset={resetSolved}
       justCompleted={justCompleted} onCelebrated={() => setJustCompleted(false)}/>;
   } else if (route === "intro") {
-    screen = <LessonIntro lessonId={activeLesson} onBack={() => setRoute("list")} onStart={openProblems}/>;
+    const back = isMeasureLeaf(activeLesson) ? "measures" : "list";
+    screen = <LessonIntro lessonId={activeLesson} onBack={() => setRoute(back)} onStart={openProblems}/>;
+  } else if (route === "measures") {
+    screen = <MeasuresList onBack={() => setRoute("list")} onPick={pickMeasure} completed={completed}/>;
   } else if (route === "list") {
     screen = <LessonList onBack={() => setRoute("map")} onPick={pickLesson} completed={completed}/>;
   } else {
