@@ -51,7 +51,7 @@ function LessonList({ onBack, onPick, completed }) {
     <div style={{ position: "relative", minHeight: "100dvh", paddingBottom: "var(--space-7)" }}>
       <BgDecor/>
       <ScreenHeader onBack={onBack} center={
-        <h1 className="math-num" style={{ margin: 0, fontSize: "calc(26px * var(--scale))", fontWeight: 700 }}>{t("grade12")}</h1>
+        <h1 style={{ margin: 0, fontSize: "calc(24px * var(--scale))", fontWeight: 700 }}>{t("subject_math")}</h1>
       }/>
       <div style={{ position: "relative", zIndex: 2, display: "grid", gap: "var(--space-3)", padding: "var(--space-3) var(--space-5)", maxWidth: 520, margin: "0 auto" }}>
         {lessons.map(l => {

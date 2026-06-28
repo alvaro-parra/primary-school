@@ -367,13 +367,18 @@ function SubtractExercise({ step, apiRef, onCanCheck, phase, slot }) {
   );
 }
 
-/* ── INT OP (suma/resta de enteros, hasta 4 dígitos en el resultado) ─
+// Dígitos fijos de respuesta para los problemas de matemáticas (suma, resta,
+// multiplicación, división). Fijo para todos para no insinuar la longitud de
+// la respuesta. Hoy el máximo real es 3 (p. ej. restas/sumas con llevada).
+const MATH_ANSWER_DIGITS = 3;
+
+/* ── INT OP (suma/resta de enteros) ──────────────────────────
    Layout vertical estilo libreta: cifras alineadas a la derecha, operador
    colgando a la izquierda de la segunda fila, línea horizontal y respuesta. */
 function IntOpExercise({ step, apiRef, onCanCheck, phase, slot }) {
   const isAdd = step.type === "intAdd";
   const answer = isAdd ? step.a + step.b : step.a - step.b;
-  const maxDigits = String(answer).length;
+  const maxDigits = MATH_ANSWER_DIGITS;
   const entry = useNumEntry([{ unit: "", max: maxDigits }], slot);
   useEffect(() => {
     apiRef.current = {
@@ -406,7 +411,7 @@ function IntOpExercise({ step, apiRef, onCanCheck, phase, slot }) {
           <div style={{ gridColumn: "1 / -1", justifySelf: "stretch", height: 3, background: "var(--ink)", marginTop: "calc(6px * var(--scale))", marginBottom: "calc(8px * var(--scale))", borderRadius: 2 }}/>
           {/* Fila 3: respuesta */}
           <span aria-hidden/>
-          <AnswerField value={entry.vals[0]} unit=""
+          <AnswerField value={entry.vals[0]} unit="" reserveChars={maxDigits}
             active={phase === "input"} state={fState}
             onFocus={phase === "input" ? () => entry.setActive(0) : null}/>
         </div>
@@ -416,36 +421,27 @@ function IntOpExercise({ step, apiRef, onCanCheck, phase, slot }) {
   );
 }
 
-/* ── Apoyo visual de multiplicación: rejilla de a×b puntos ───── */
-function DotsArray({ rows, cols }) {
-  return (
-    <div style={{ display: "grid", gap: "calc(6px * var(--scale))", justifyContent: "center", padding: "var(--space-2) 0" }}>
-      {Array.from({ length: rows }).map((_, r) => (
-        <div key={r} style={{ display: "flex", gap: "calc(6px * var(--scale))", justifyContent: "center" }}>
-          {Array.from({ length: cols }).map((_, c) => (
-            <span key={c} style={{ width: "calc(20px * var(--scale))", height: "calc(20px * var(--scale))", borderRadius: "50%", background: "var(--secondary)", border: "2px solid var(--ink)" }}/>
-          ))}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* ── Apoyo visual de división: a puntos repartidos en b grupos ── */
-function ShareGroups({ total, groups }) {
-  const per = Math.floor(total / groups);
+/* ── Apoyo visual unificado: "grupos" en cajas punteadas ──────
+   Multiplicación a×b = a cajas de b puntos (a grupos de b).
+   División a÷b      = b cajas de a/b puntos (repartir en b grupos).
+   Mismo lenguaje visual para × y ÷; solo cambia el color. */
+function GroupBoxes({ groups, per, color }) {
+  const cols = Math.min(per, 5);   // máx. 5 puntos por fila dentro de la caja
   return (
     <div style={{ display: "flex", gap: "calc(8px * var(--scale))", justifyContent: "center", flexWrap: "wrap", padding: "var(--space-2) 0" }}>
       {Array.from({ length: groups }).map((_, g) => (
-        <div key={g} style={{ display: "grid", gridTemplateColumns: "repeat(2, auto)", gap: "calc(5px * var(--scale))", padding: "calc(8px * var(--scale))", borderRadius: "var(--r-md)", border: "2px dashed var(--ink)", background: "var(--bg-2)" }}>
+        <div key={g} style={{ display: "grid", gridTemplateColumns: `repeat(${cols || 1}, auto)`, gap: "calc(5px * var(--scale))", padding: "calc(8px * var(--scale))", borderRadius: "var(--r-md)", border: "2px dashed var(--ink)", background: "var(--bg-2)" }}>
           {Array.from({ length: per }).map((_, i) => (
-            <span key={i} style={{ width: "calc(18px * var(--scale))", height: "calc(18px * var(--scale))", borderRadius: "50%", background: "var(--primary)", border: "2px solid var(--ink)" }}/>
+            <span key={i} style={{ width: "calc(18px * var(--scale))", height: "calc(18px * var(--scale))", borderRadius: "50%", background: color, border: "2px solid var(--ink)" }}/>
           ))}
         </div>
       ))}
     </div>
   );
 }
+// Compatibilidad: multiplicación (rows grupos × cols) y división (total/groups).
+function DotsArray({ rows, cols }) { return <GroupBoxes groups={rows} per={cols} color="var(--secondary)"/>; }
+function ShareGroups({ total, groups }) { return <GroupBoxes groups={groups} per={Math.floor(total / groups)} color="var(--primary)"/>; }
 
 /* ── INT MUL/DIV (multiplicación y división de enteros) ────────
    Layout horizontal "a × b = [ ]" (números pequeños). Con apoyo visual
@@ -453,7 +449,7 @@ function ShareGroups({ total, groups }) {
 function IntMulDivExercise({ step, apiRef, onCanCheck, phase, slot }) {
   const isMul = step.type === "intMul";
   const answer = isMul ? step.a * step.b : step.a / step.b;
-  const maxDigits = String(answer).length;
+  const maxDigits = MATH_ANSWER_DIGITS;
   const entry = useNumEntry([{ unit: "", max: maxDigits }], slot);
   useEffect(() => {
     apiRef.current = {
@@ -478,7 +474,7 @@ function IntMulDivExercise({ step, apiRef, onCanCheck, phase, slot }) {
         <span className="math-num" style={{ ...numStyle, color: opColor }}>{isMul ? "×" : "÷"}</span>
         <span className="math-num" style={numStyle}>{step.b}</span>
         <span className="math-num" style={{ ...numStyle, color: "var(--ink-soft)" }}>=</span>
-        <AnswerField value={entry.vals[0]} unit=""
+        <AnswerField value={entry.vals[0]} unit="" reserveChars={maxDigits}
           active={phase === "input"} state={fState}
           onFocus={phase === "input" ? () => entry.setActive(0) : null}/>
       </div>
@@ -511,4 +507,4 @@ function Exercise(props) {
   }
 }
 
-Object.assign(window, { Exercise, CmZoom, MeasureExpr, DotsArray, ShareGroups, QHideContext, stepQuestion });
+Object.assign(window, { Exercise, CmZoom, MeasureExpr, DotsArray, ShareGroups, GroupBoxes, QHideContext, stepQuestion });

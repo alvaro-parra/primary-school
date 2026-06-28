@@ -8,7 +8,7 @@ function LessonMap({ onStart, completed }) {
     <div style={{ position: "relative", minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "var(--space-6)", gap: "var(--space-5)" }}>
       <BgDecor/>
       <div style={{ position: "relative", zIndex: 2, display: "grid", gap: "var(--space-4)", justifyItems: "center", width: "100%", maxWidth: 360 }}>
-        <GradeButton label="1-2 年" done={done} onClick={() => onStart("units")}/>
+        <GradeButton label={t("subject_math")} done={done} onClick={() => onStart("math")}/>
       </div>
     </div>
   );
@@ -28,7 +28,7 @@ function GradeButton({ label, done, onClick }) {
         padding: "calc(34px * var(--scale)) var(--space-5)", display: "flex", alignItems: "center", justifyContent: "center", gap: "var(--space-4)",
         transition: "transform 110ms, box-shadow 110ms", cursor: "pointer",
       }}>
-      <span className="math-num" style={{ fontSize: "calc(48px * var(--scale))", fontWeight: 700, lineHeight: 1, whiteSpace: "nowrap" }}>{label}</span>
+      <span style={{ fontSize: "calc(38px * var(--scale))", fontWeight: 800, lineHeight: 1.1, textAlign: "center", overflowWrap: "anywhere" }}>{label}</span>
     </button>
   );
 }

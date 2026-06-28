@@ -307,11 +307,13 @@ button:focus-visible {
   --heart-strong: #E76F51;
 }
 
-/* Dígitos de matemáticas — Fredoka tabular para que las cifras no bailen
-   y se lean grandes y firmes (número como protagonista). */
+/* Dígitos de matemáticas — Baloo 2 con cifras tabulares (Fredoka no las trae)
+   para que todas las cifras ocupen el mismo ancho y no bailen. Redondeada y
+   firme: el número es el protagonista. */
 .math-num {
-  font-family: 'Fredoka', system-ui, sans-serif;
+  font-family: 'Baloo 2', 'Fredoka', system-ui, sans-serif;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1, "kern" 1;
   letter-spacing: 0.01em;
 }

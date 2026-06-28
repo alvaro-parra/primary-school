@@ -305,7 +305,7 @@ function MeasureConvertExercise({ step, apiRef, onCanCheck, phase, slot }) {
   const totalMilli = window.measSumMilli(given);
   const askAsc = ask.slice().sort((a, b) => window.measUnitExp(a) - window.measUnitExp(b));
   const parts = window.measDecompose(totalMilli, askAsc);   // mayor → menor (orden de lectura)
-  const slots = parts.map(p => ({ unit: window.measUnitSym(measure, p.prefix), max: 4 }));
+  const slots = parts.map(p => ({ unit: window.measUnitSym(measure, p.prefix), max: Math.max(4, String(p.n).length) }));
   const entry = useNumEntry(slots, slot);
   const correctLabel = parts.map(p => `${p.n} ${window.measUnitSym(measure, p.prefix)}`).join(" ");
   useEffect(() => {
@@ -380,7 +380,7 @@ function MeasureCalcExercise({ step, apiRef, onCanCheck, phase, slot }) {
   // Respuesta en las unidades que aparecen en los operandos (ascendente).
   const prefixes = [...new Set([...a, ...b].map(x => x.prefix))].sort((x, y) => window.measUnitExp(x) - window.measUnitExp(y));
   const parts = window.measDecompose(total, prefixes);   // mayor → menor
-  const slots = parts.map(p => ({ unit: window.measUnitSym(measure, p.prefix), max: 4 }));
+  const slots = parts.map(p => ({ unit: window.measUnitSym(measure, p.prefix), max: Math.max(4, String(p.n).length) }));
   const entry = useNumEntry(slots, slot);
   const correctLabel = parts.map(p => `${p.n} ${window.measUnitSym(measure, p.prefix)}`).join(" ");
   useEffect(() => { apiRef.current = { correctLabel, check: () => parts.every((p, i) => Number(entry.vals[i]) === p.n) }; });

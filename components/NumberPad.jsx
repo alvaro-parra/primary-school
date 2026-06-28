@@ -4,7 +4,7 @@
 // `active` lo resalta (foco). `state`: null | "ok" | "ng" para feedback.
 // El campo seleccionado se distingue por borde azul + fondo tintado + sombra
 // elevada (sin cursor parpadeante), igual para 1 campo o para cm+mm.
-function AnswerField({ value, unit, active = false, state = null, onFocus = null, placeholder = "?" }) {
+function AnswerField({ value, unit, active = false, state = null, onFocus = null, placeholder = "?", reserveChars = 0 }) {
   const empty = value === "" || value == null;
   let border = "var(--ink)", bg = "var(--surface)", shadow = "0 3px 0 rgba(42,42,51,0.22)";
   if (state === "ok") { border = "var(--ok)"; bg = "var(--ok-soft)"; shadow = "0 3px 0 var(--ok)"; }
@@ -25,7 +25,10 @@ function AnswerField({ value, unit, active = false, state = null, onFocus = null
       <span className="math-num" style={{
         fontSize: "calc(40px * var(--scale))", fontWeight: 700, lineHeight: 1,
         color: empty ? (active ? "var(--secondary-strong)" : "var(--ink-faint)") : "var(--ink)",
-        minWidth: "0.7em", textAlign: "center",
+        textAlign: "center",
+        // reserveChars fija el ancho para N cifras (no crece al teclear y no
+        // desplaza el resto del layout). Si no, ancho mínimo de 1 cifra.
+        ...(reserveChars ? { width: `${(reserveChars * 0.62).toFixed(2)}em` } : { minWidth: "0.7em" }),
       }}>{empty ? placeholder : value}</span>
       {unit && <span style={{ fontSize: "calc(20px * var(--scale))", fontWeight: 700, color: unitColor }}>{unit}</span>}
     </button>
