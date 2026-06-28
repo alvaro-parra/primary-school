@@ -73,18 +73,35 @@ function MeasuresList({ onBack, onPick, completed }) {
 /* ── Contenido de teoría por sistema ─────────────────────────── */
 const MEAS_CONTENT = {
   length: {
-    es: { intro: "Medimos longitudes (lo largo que es algo). La unidad base es el metro (m). Para cosas pequeñas usamos el centímetro (cm) y el milímetro (mm).", rule: "Cada escalón es 10 veces: 1 cm = 10 mm." },
-    ja: { intro: "ながさ（どれくらい ながいか）を はかります。きほんの たんいは メートル（m）。ちいさい ものは センチメートル（cm）や ミリメートル（mm）。", rule: "1だん ごとに 10ばい：1cm = 10mm。" },
+    es: { intro: "Medimos longitudes (lo largo que es algo). La unidad base es el metro (m). Para cosas pequeñas usamos el centímetro (cm) y el milímetro (mm).", rule: "Cada escalón es 10 veces:" },
+    ja: { intro: "ながさ（どれくらい ながいか）を はかります。きほんの たんいは メートル（m）。ちいさい ものは センチメートル（cm）や ミリメートル（mm）。", rule: "1だん ごとに 10ばい：" },
   },
   mass: {
-    es: { intro: "La masa es lo que pesa algo. La unidad base es el gramo (g). Las cosas pesadas se miden en kilogramos (kg).", rule: "Cada escalón es 10 veces. 1 kg = 1000 g." },
-    ja: { intro: "おもさ（しつりょう）を はかります。きほんの たんいは グラム（g）。おもい ものは キログラム（kg）。", rule: "1だん ごとに 10ばい。1kg = 1000g。" },
+    es: { intro: "La masa es lo que pesa algo. La unidad base es el gramo (g). Las cosas pesadas se miden en kilogramos (kg).", rule: "Cada escalón es 10 veces:" },
+    ja: { intro: "おもさ（しつりょう）を はかります。きほんの たんいは グラム（g）。おもい ものは キログラム（kg）。", rule: "1だん ごとに 10ばい：" },
   },
   capacity: {
-    es: { intro: "La capacidad es cuánto líquido cabe. La unidad base es el litro (L). Para poca cantidad usamos el decilitro (dL) y el mililitro (mL).", rule: "Cada escalón es 10 veces. 1 L = 10 dL = 1000 mL." },
-    ja: { intro: "かさ（どれだけ えきたいが はいるか）を はかります。きほんの たんいは リットル（L）。すこしの ときは デシリットル（dL）や ミリリットル（mL）。", rule: "1だん ごとに 10ばい。1L = 10dL = 1000mL。" },
+    es: { intro: "La capacidad es cuánto líquido cabe. La unidad base es el litro (L). Para poca cantidad usamos el decilitro (dL) y el mililitro (mL).", rule: "Cada escalón es 10 veces:" },
+    ja: { intro: "かさ（どれだけ えきたいが はいるか）を はかります。きほんの たんいは リットル（L）。すこしの ときは デシリットル（dL）や ミリリットル（mL）。", rule: "1だん ごとに 10ばい：" },
   },
 };
+
+/* Equivalencia básica del sistema como fórmula grande (1 L = 10 dL = 1000 mL). */
+function LadderRule({ measure }) {
+  const exp = (p) => window.measUnitExp(p);
+  const desc = window.MIDOKU_MEASURES[measure].basic.slice().sort((a, b) => exp(b) - exp(a));   // mayor → menor
+  const chain = desc.map((p, i) => ({ n: i === 0 ? 1 : Math.pow(10, exp(desc[0]) - exp(p)), prefix: p }));
+  return (
+    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: "calc(8px * var(--scale))", flexWrap: "wrap", padding: "var(--space-2) 0 var(--space-1)" }}>
+      {chain.map((c, i) => (
+        <React.Fragment key={c.prefix}>
+          {i > 0 && <span className="math-num" style={{ fontSize: "calc(24px * var(--scale))", fontWeight: 700, color: "var(--ink-soft)" }}>=</span>}
+          <span className="math-num" style={{ fontSize: "calc(32px * var(--scale))", fontWeight: 800 }}>{c.n}<span style={{ color: "var(--cm-accent)", fontSize: "0.5em", marginLeft: 1 }}>{window.measUnitSym(measure, c.prefix)}</span></span>
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
 
 /* Pastilla con el símbolo de una unidad. */
 function UnitChip({ measure, prefix, big, dim }) {
@@ -119,51 +136,62 @@ function MeasureValue({ measure, parts, size = 26, all = false }) {
    Salida: la misma cantidad en cada agrupación, quitando la unidad
    mayor en cada paso, hasta la unidad más pequeña. */
 const CONV_MAX = 1000;
+const CONV_DIGITS = 4;            // el número siempre se muestra con 4 cifras
+// Aceleración al mantener pulsado: ×1 al principio, ×10 pasados ~2 s.
+const CONV_RAMP = [[2000, 10], [0, 1]];
+function convStep(elapsed) { return (CONV_RAMP.find(([t]) => elapsed >= t) || [0, 1])[1]; }
+
 function ConvRow({ measure, prefix, value, onChange }) {
   const clamp = (v) => Math.max(0, Math.min(CONV_MAX, v));
-  const valueRef = useRef(value); valueRef.current = value;   // último valor para el auto-repeat
+  const valueRef = useRef(value); valueRef.current = value;
   const timer = useRef(null);
   const stop = () => { if (timer.current) { clearTimeout(timer.current); clearInterval(timer.current); timer.current = null; } };
   useEffect(() => stop, []);   // limpiar al desmontar
-  // Mantener pulsado un botón ±: aplica una vez y, tras una pausa, repite.
-  const startRepeat = (delta) => {
+  // Mantener pulsado: avanza de 1 en 1 y, pasados unos segundos, acelera.
+  const startRepeat = (dir) => {
     stop();
-    onChange(clamp(valueRef.current + delta));
-    timer.current = setTimeout(() => {
-      timer.current = setInterval(() => {
-        const next = clamp(valueRef.current + delta);
-        if (next === valueRef.current) return stop();
-        onChange(next);
-      }, 80);
-    }, 350);
+    const t0 = performance.now();
+    const applyOnce = () => {
+      const step = convStep(performance.now() - t0);
+      const v = valueRef.current;
+      // Al acelerar (paso 10) saltamos al múltiplo de 10 → las unidades quedan a 0.
+      const next = clamp(dir > 0 ? (Math.floor(v / step) + 1) * step : (Math.ceil(v / step) - 1) * step);
+      if (next === v) return false;
+      onChange(next);
+      return true;
+    };
+    // Cadencia por tramo: ×1 suave (90 ms), ×10 más rápido (50 ms).
+    const loop = () => {
+      if (!applyOnce()) return stop();
+      timer.current = setTimeout(loop, convStep(performance.now() - t0) >= 10 ? 50 : 90);
+    };
+    applyOnce();                               // primer toque inmediato
+    timer.current = setTimeout(loop, 350);     // pausa inicial, luego repite
   };
-  const baseStyle = (disabled) => ({ minWidth: "calc(31px * var(--scale))", height: "calc(32px * var(--scale))",
-    borderRadius: "var(--r-md)", border: "3px solid var(--ink)", background: "var(--surface)",
-    boxShadow: disabled ? "none" : "0 3px 0 var(--ink)", fontWeight: 800, fontSize: "calc(13px * var(--scale))",
-    lineHeight: 1, opacity: disabled ? 0.4 : 1, cursor: disabled ? "default" : "pointer", touchAction: "none", userSelect: "none" });
-  // Salto directo a mín/máx (un solo toque).
-  const jump = (label, to, disabled) => (
-    <button onClick={() => onChange(clamp(to))} disabled={disabled} aria-label={String(label)} style={baseStyle(disabled)}>{label}</button>
-  );
-  // Botón ± con auto-repetición al mantener pulsado.
-  const rep = (label, delta, disabled) => (
-    <button disabled={disabled} aria-label={String(label)} style={baseStyle(disabled)}
-      onPointerDown={(e) => { e.preventDefault(); if (!disabled) startRepeat(delta); }}
+  const atMin = value <= 0, atMax = value >= CONV_MAX;
+  const btn = (label, dir, disabled) => (
+    <button disabled={disabled} aria-label={dir < 0 ? "menos" : "más"}
+      style={{ width: "calc(44px * var(--scale))", height: "calc(44px * var(--scale))", flexShrink: 0,
+        borderRadius: "var(--r-md)", border: "3px solid var(--ink)", background: "var(--surface)",
+        boxShadow: disabled ? "none" : "0 3px 0 var(--ink)", fontWeight: 800, fontSize: "calc(26px * var(--scale))",
+        lineHeight: 1, opacity: disabled ? 0.4 : 1, cursor: disabled ? "default" : "pointer", touchAction: "none", userSelect: "none" }}
+      onPointerDown={(e) => { e.preventDefault(); if (!disabled) startRepeat(dir); }}
       onPointerUp={stop} onPointerLeave={stop} onPointerCancel={stop}>{label}</button>
   );
-  const atMin = value <= 0, atMax = value >= CONV_MAX;
+
+  // 4 cifras; los ceros a la izquierda en pálido (nunca la última cifra).
+  const digits = String(value).padStart(CONV_DIGITS, "0").split("");
+  const firstNZ = digits.findIndex(d => d !== "0");
+  const paleUntil = firstNZ === -1 ? CONV_DIGITS - 1 : firstNZ;   // 0000 → última sólida
+
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", alignItems: "center", gap: "calc(8px * var(--scale))" }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "calc(10px * var(--scale))" }}>
       <span style={{ minWidth: "calc(46px * var(--scale))", textAlign: "right" }}><UnitChip measure={measure} prefix={prefix}/></span>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "calc(4px * var(--scale))", flexWrap: "wrap" }}>
-        {jump("⏮", 0, atMin)}
-        {rep("−10", -10, atMin)}
-        {rep("−", -1, atMin)}
-        <span className="math-num" style={{ minWidth: "calc(58px * var(--scale))", textAlign: "center", fontSize: "calc(24px * var(--scale))", fontWeight: 800 }}>{value}</span>
-        {rep("+", 1, atMax)}
-        {rep("+10", 10, atMax)}
-        {jump("⏭", CONV_MAX, atMax)}
-      </div>
+      {btn("−", -1, atMin)}
+      <span className="math-num" style={{ textAlign: "center", fontSize: "calc(30px * var(--scale))", fontWeight: 800 }}>
+        {digits.map((d, i) => <span key={i} style={{ opacity: i < paleUntil ? 0.25 : 1 }}>{d}</span>)}
+      </span>
+      {btn("+", 1, atMax)}
     </div>
   );
 }
@@ -286,7 +314,8 @@ function MeasureIntroBody({ lessonId }) {
       </div>
 
       <IntroSection title={t("ladder_rule")}>
-        <p style={{ margin: 0, fontSize: "calc(15px * var(--scale))", fontWeight: 600, color: "var(--ink-soft)" }}>{c.rule}</p>
+        <p style={{ margin: 0, fontSize: "calc(14px * var(--scale))", fontWeight: 600, color: "var(--ink-soft)", textAlign: "center" }}>{c.rule}</p>
+        <LadderRule measure={lessonId}/>
       </IntroSection>
 
       <IntroSection title={t("other_units")}>
@@ -391,16 +420,24 @@ function MeasureCalcExercise({ step, apiRef, onCanCheck, phase, slot }) {
   return (
     <div style={{ display: "grid", gap: "var(--space-4)" }}>
       <QuestionBar>{op === "+" ? t("mAddQ") : t("mSubQ")}</QuestionBar>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "calc(8px * var(--scale))", flexWrap: "wrap", padding: "var(--space-3) 0" }}>
-        <MeasureValue measure={measure} parts={a} size={26}/>
-        <span className="math-num" style={{ fontSize: "calc(24px * var(--scale))", fontWeight: 700, color: opColor }}>{op === "+" ? "+" : "−"}</span>
-        <MeasureValue measure={measure} parts={b} size={26}/>
-        <span className="math-num" style={{ fontSize: "calc(24px * var(--scale))", fontWeight: 700, color: "var(--ink-soft)" }}>=</span>
-        {parts.map((p, i) => (
-          <AnswerField key={i} value={entry.vals[i]} unit={window.measUnitSym(measure, p.prefix)}
-            active={phase === "input" && entry.active === i} state={fState(i)}
-            onFocus={phase === "input" ? () => entry.setActive(i) : null}/>
-        ))}
+      {/* Vertical estilo libreta: operandos apilados, operador a la izquierda,
+          línea y, debajo, los campos de respuesta (evita el ancho de una línea). */}
+      <div style={{ display: "grid", justifyContent: "center", padding: "var(--space-3) 0" }}>
+        <div style={{ display: "inline-grid", gridTemplateColumns: "auto auto", columnGap: "calc(12px * var(--scale))", rowGap: "calc(6px * var(--scale))", justifyItems: "end", alignItems: "center" }}>
+          <span aria-hidden/>
+          <MeasureValue measure={measure} parts={a} size={38}/>
+          <span className="math-num" style={{ fontSize: "calc(34px * var(--scale))", fontWeight: 700, color: opColor }}>{op === "+" ? "+" : "−"}</span>
+          <MeasureValue measure={measure} parts={b} size={38}/>
+          <div style={{ gridColumn: "1 / -1", justifySelf: "stretch", height: 3, background: "var(--ink)", marginTop: "calc(6px * var(--scale))", marginBottom: "calc(8px * var(--scale))", borderRadius: 2 }}/>
+          <span aria-hidden/>
+          <div style={{ display: "flex", gap: "calc(8px * var(--scale))", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
+            {parts.map((p, i) => (
+              <AnswerField key={i} value={entry.vals[i]} unit={window.measUnitSym(measure, p.prefix)}
+                active={phase === "input" && entry.active === i} state={fState(i)}
+                onFocus={phase === "input" ? () => entry.setActive(i) : null}/>
+            ))}
+          </div>
+        </div>
       </div>
       <NumberPad onDigit={entry.push} onDelete={entry.del} onClear={entry.clear} disabled={phase === "checked"}/>
     </div>

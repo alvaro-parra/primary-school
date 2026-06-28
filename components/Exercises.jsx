@@ -196,7 +196,7 @@ function SetRulerExercise({ step, apiRef, onCanCheck, phase, slot }) {
       <QuestionBar onSpeak={() => sayMeasure(step.target.cm, step.target.mm)} mood="happy">
         {t("tapRuler")} <b style={{ color: "var(--cm-accent)" }}>{fmtMeasure(step.target)}</b>
       </QuestionBar>
-      <div style={{ background: "var(--surface)", border: "3px solid var(--ink)", borderRadius: "var(--r-lg)", boxShadow: "var(--shadow-md)", padding: "var(--space-5) var(--space-4)" }}>
+      <div style={{ width: "100%" }}>
         <Ruler cmCount={cmCount} interactive value={val} onChange={setVal} snap={step.snap || "mm"}
           markMm={phase === "checked" && val !== targetMm ? targetMm : null} guide={false} height={170}/>
         {/* Sin lectura en vivo durante el intento (sería regalar la respuesta);

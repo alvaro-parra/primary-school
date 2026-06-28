@@ -16,7 +16,7 @@
 function Ruler({
   cmCount = 12, objectMm = null, objectColor = "var(--measure)", objectLabel = null,
   tapeMm = null, markMm = null, interactive = false, value = 0, onChange = null,
-  guide = true, snap = "mm", height = 150, fine = false,
+  guide = true, snap = "mm", height = 150, fine = false, fitHeight = null,
 }) {
   const VB_M = 16;                       // margen lateral (unidades = mm)
   const N = cmCount;
@@ -111,8 +111,9 @@ function Ruler({
 
   return (
     <div style={{ width: "100%", userSelect: "none", touchAction: interactive ? "none" : "auto" }}>
-      <svg ref={svgRef} viewBox={`0 0 ${W} ${VB_H}`} width="100%"
-        style={{ height: "auto", display: "block", overflow: "visible",
+      <svg ref={svgRef} viewBox={`0 0 ${W} ${VB_H}`} width={fitHeight ? undefined : "100%"}
+        style={{ display: "block", overflow: "visible", maxWidth: "100%",
+                 ...(fitHeight ? { height: `${fitHeight}px`, width: "auto", margin: "0 auto" } : { height: "auto" }),
                  cursor: interactive ? (dragging ? "grabbing" : "grab") : "default" }}
         onPointerDown={handleDown} onPointerMove={handleMove} onPointerUp={handleUp} onPointerCancel={handleUp}>
 
@@ -184,27 +185,27 @@ window.Ruler = Ruler;
 // respuesta (los cm visibles cambian con el problema), de modo que cada mm
 // ocupa lo que un cm en una regla normal. La barra de medida entra CORTADA por
 // la izquierda (el 0 nunca se ve). answerMm = cm*10+mm (mm 1..9).
-function ZoomRuler({ answerMm, color = "var(--secondary)", revealed = false }) {
+function ZoomRuler({ answerMm, color = "var(--secondary)", revealed = false, fitHeight = null }) {
   const S = 8;                                 // unidades de viewBox por mm (zoom)
   const VB_M = 10, P = 4;                       // margen lateral y relleno (mm)
   const cm = Math.floor(answerMm / 10);
   const lo = cm * 10 - P, hi = cm * 10 + 10 + P;
   const span = hi - lo;                         // 18 mm
   const W = span * S + VB_M * 2;
-  const OBJ_TOP = 4, OBJ_H = 26, RY = 40, RH = 86, VB_H = RY + RH + 4;
+  const OBJ_TOP = 3, OBJ_H = 20, RY = 26, RH = 52, VB_H = RY + RH + 4;  // más bajo (mismo ancho)
   const X = (m) => VB_M + (m - lo) * S;          // mm → x
 
   const ticks = [], nums = [];
   for (let m = lo; m <= hi; m++) {
     const isCm = m % 10 === 0, isHalf = m % 5 === 0;
-    const len = isCm ? 46 : isHalf ? 28 : 15;
+    const len = isCm ? 30 : isHalf ? 18 : 10;
     ticks.push(
       <line key={m} x1={X(m)} y1={RY} x2={X(m)} y2={RY + len} stroke="var(--ruler-tick)"
         strokeWidth={isCm ? 3 : isHalf ? 2 : 1.3} opacity={isCm ? 1 : isHalf ? 0.85 : 0.5}/>
     );
     if (isCm) nums.push(
-      <text key={"n" + m} x={X(m)} y={RY + 70} textAnchor="middle" className="math-num"
-        style={{ fontSize: 22, fill: "var(--ruler-num)", fontWeight: 700 }}>{m / 10}</text>
+      <text key={"n" + m} x={X(m)} y={RY + RH - 8} textAnchor="middle" className="math-num"
+        style={{ fontSize: 17, fill: "var(--ruler-num)", fontWeight: 700 }}>{m / 10}</text>
     );
   }
   // Barra cortada: borde izquierdo en zigzag (continúa hasta el 0, fuera de pantalla).
@@ -215,14 +216,20 @@ function ZoomRuler({ answerMm, color = "var(--secondary)", revealed = false }) {
 
   return (
     <div style={{ width: "100%" }}>
-      <svg viewBox={`0 0 ${W} ${VB_H}`} width="100%" style={{ height: "auto", maxHeight: 230, display: "block", overflow: "hidden" }}>
+      <svg viewBox={`0 0 ${W} ${VB_H}`} width={fitHeight ? undefined : "100%"}
+        style={{ display: "block", overflow: "hidden", maxWidth: "100%",
+                 ...(fitHeight ? { height: `${fitHeight}px`, width: "auto", margin: "0 auto" } : { height: "auto", maxHeight: 230 }) }}>
         <defs>
           <linearGradient id="zwood" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="var(--ruler-face)"/>
             <stop offset="100%" stopColor="var(--ruler-face-2)"/>
           </linearGradient>
         </defs>
-        <rect x={0} y={RY} width={W} height={RH} rx={12} fill="url(#zwood)" stroke="var(--ink)" strokeWidth="3.5"/>
+        {/* La regla es un trozo AMPLIADO de una más larga: banda recta a todo
+            el ancho, con borde solo arriba y abajo (los lados continúan). */}
+        <rect x={0} y={RY} width={W} height={RH} fill="url(#zwood)"/>
+        <line x1={0} y1={RY} x2={W} y2={RY} stroke="var(--ink)" strokeWidth="3.5"/>
+        <line x1={0} y1={RY + RH} x2={W} y2={RY + RH} stroke="var(--ink)" strokeWidth="3.5"/>
         <path d={d} fill={color} stroke="var(--ink)" strokeWidth="2.5" strokeLinejoin="round"/>
         <rect x={z + 3} y={OBJ_TOP + 3} width={Math.max(0, xEnd - z - 7)} height={6} rx={3} fill="rgba(255,255,255,0.4)"/>
         {ticks}{nums}
