@@ -75,7 +75,7 @@ function ProblemCard({ icon, title, done, onClick }) {
         padding: "var(--space-4) var(--space-3)", minHeight: 120, transition: "transform 100ms, box-shadow 100ms", cursor: "pointer",
       }}>
       <span style={{ width: 52, height: 52, display: "grid", placeItems: "center", borderRadius: "var(--r-md)", border: "3px solid var(--ink)", background: done ? "var(--ok)" : "var(--tertiary-soft)" }}>
-        <ProblemIcon kind={done ? "check" : icon}/>
+        <ProblemIcon kind={icon}/>
       </span>
       <span style={{ fontWeight: 700, fontSize: "calc(15px * var(--scale))", lineHeight: 1.15, textWrap: "pretty" }}>{title}</span>
       {done && (

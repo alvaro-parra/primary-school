@@ -151,19 +151,31 @@
   }
 
   // ¿cuál es mayor?  (p.ej. 1 L vs 8 dL)
+  // 3 cantidades distintas (en unidades mezcladas) de magnitud parecida.
   function genCompare(measure) {
     const E = getEnabled(measure);
-    const p = pickPair(measure);
-    if (!p) {
-      const u = E[0]; const a = ri(1, 9); let b = ri(1, 9); if (b === a) b = a < 9 ? a + 1 : a - 1;
-      return { type: "mCompare", measure, a: [{ n: a, prefix: u }], b: [{ n: b, prefix: u }] };
+    if (E.length < 2) {
+      const u = E[0], ns = [];
+      while (ns.length < 3) { const n = ri(1, 9); if (!ns.includes(n)) ns.push(n); }
+      return { type: "mCompare", measure, items: ns.map(n => [{ n, prefix: u }]) };
     }
-    const f = factor(p.lo, p.hi);
-    const aHi = ri(1, 3);
-    let bLo = aHi * f + (Math.random() < 0.5 ? -1 : 1) * ri(1, Math.max(1, Math.floor(f / 2)));
-    if (bLo < 1) bLo = aHi * f + ri(1, Math.max(1, Math.floor(f / 2)));
-    if (bLo * unitMilli(p.lo) === aHi * unitMilli(p.hi)) bLo += 1;
-    return { type: "mCompare", measure, a: [{ n: aHi, prefix: p.hi }], b: [{ n: bLo, prefix: p.lo }] };
+    const i = ri(0, E.length - 2);
+    const lo = E[i], hi = E[i + 1];
+    const f = factor(lo, hi);
+    // 1 cantidad en la unidad alta + 2 en la baja → mezcla (hay que convertir).
+    const hiN = ri(1, 2);
+    const seen = new Set([hiN * f]);
+    const items = [[{ n: hiN, prefix: hi }]];
+    let guard = 0;
+    while (items.length < 3 && guard++ < 80) {
+      const tlo = ri(1, 3 * f);
+      if (seen.has(tlo) || tlo % f === 0) continue;   // distinto y no múltiplo exacto (queda en 'lo')
+      seen.add(tlo);
+      items.push([{ n: tlo, prefix: lo }]);
+    }
+    // baraja para que la respuesta no caiga siempre en la misma posición
+    for (let k = items.length - 1; k > 0; k--) { const j = ri(0, k); const t = items[k]; items[k] = items[j]; items[j] = t; }
+    return { type: "mCompare", measure, items };
   }
   // suma de dos medidas (p.ej. 1 L 5 dL + 2 dL)
   function genAdd(measure) {

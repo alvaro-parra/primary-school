@@ -270,9 +270,9 @@ function UnitPicker({ measure, onClose, onChange }) {
   );
 }
 
-/* ── Modal tabla de unidades (con lectura en katakana / nombre) ─ */
-function UnitTable({ measure, onClose }) {
-  const ladder = window.measLadder();
+/* ── Modal tabla de unidades (solo las seleccionadas, mayor → menor) ─ */
+function UnitTable({ measure, enabled, onClose }) {
+  const units = (enabled || window.measEnabled(measure)).slice().reverse();   // mayor → menor
   const lang = getLang();
   const cell = { padding: "calc(8px * var(--scale)) calc(10px * var(--scale))", borderBottom: "2px solid var(--bg-2)", textAlign: "left" };
   return (
@@ -280,7 +280,7 @@ function UnitTable({ measure, onClose }) {
       <h2 style={{ margin: "0 0 var(--space-4)", fontSize: "calc(19px * var(--scale))", fontWeight: 700, textAlign: "center" }}>{t("unit_table")}</h2>
       <table style={{ borderCollapse: "collapse", width: "100%", background: "var(--surface)", border: "2.5px solid var(--ink)", borderRadius: "var(--r-md)", overflow: "hidden" }}>
         <tbody>
-          {ladder.map(prefix => (
+          {units.map(prefix => (
             <tr key={prefix}>
               <td style={{ ...cell, width: "32%" }}><span className="math-num" style={{ fontWeight: 800, fontSize: "calc(20px * var(--scale))" }}>{window.measUnitSym(measure, prefix)}</span></td>
               <td style={{ ...cell, fontSize: "calc(16px * var(--scale))", fontWeight: 600 }}>{window.measUnitName(measure, prefix, lang)}</td>
@@ -296,22 +296,19 @@ function UnitTable({ measure, onClose }) {
 }
 
 /* ── Cuerpo de teoría de un sistema de medida ────────────────── */
-function MeasureIntroBody({ lessonId }) {
+// `enabled` (unidades activas) lo gestiona LessonIntro junto al engranaje de
+// configuración de la cabecera.
+function MeasureIntroBody({ lessonId, enabled }) {
   const lang = getLang();
   const c = (MEAS_CONTENT[lessonId] && (MEAS_CONTENT[lessonId][lang] || MEAS_CONTENT[lessonId].es)) || MEAS_CONTENT.length.es;
-  const [enabled, setEnabled] = useState(() => window.measEnabled(lessonId));
-  const [showPicker, setShowPicker] = useState(false);
+  const units = enabled || window.measEnabled(lessonId);
   const [showTable, setShowTable] = useState(false);
 
   return (
     <>
       <p style={{ margin: 0, fontSize: "calc(17px * var(--scale))", fontWeight: 600, lineHeight: 1.45, color: "var(--ink-soft)", textWrap: "pretty" }}>{c.intro}</p>
 
-      {/* Herramientas: unidades + tabla */}
-      <div style={{ display: "flex", gap: "var(--space-3)" }}>
-        <BigButton color="secondary" onClick={() => setShowPicker(true)} style={{ flex: 1 }}>{t("units_btn")}</BigButton>
-        <BigButton color="neutral" onClick={() => setShowTable(true)} style={{ flex: 1 }}>{t("unit_table")}</BigButton>
-      </div>
+      <BigButton color="neutral" onClick={() => setShowTable(true)} style={{ width: "100%" }}>{t("unit_table")}</BigButton>
 
       <IntroSection title={t("ladder_rule")}>
         <p style={{ margin: 0, fontSize: "calc(14px * var(--scale))", fontWeight: 600, color: "var(--ink-soft)", textAlign: "center" }}>{c.rule}</p>
@@ -319,11 +316,10 @@ function MeasureIntroBody({ lessonId }) {
       </IntroSection>
 
       <IntroSection title={t("other_units")}>
-        <UnitConverter key={enabled.join(",")} measure={lessonId} enabled={enabled}/>
+        <UnitConverter key={units.join(",")} measure={lessonId} enabled={units}/>
       </IntroSection>
 
-      {showPicker && <UnitPicker measure={lessonId} onChange={setEnabled} onClose={() => setShowPicker(false)}/>}
-      {showTable && <UnitTable measure={lessonId} onClose={() => setShowTable(false)}/>}
+      {showTable && <UnitTable measure={lessonId} enabled={units} onClose={() => setShowTable(false)}/>}
     </>
   );
 }
@@ -360,42 +356,49 @@ function MeasureConvertExercise({ step, apiRef, onCanCheck, phase, slot }) {
   );
 }
 
-/* ── Ejercicio: ¿cuál es mayor? (tipo "mCompare") ────────────── */
+/* ── Ejercicio: ¿cuál es mayor? (tipo "mCompare") ──────────────
+   Lista de cantidades (en unidades mezcladas). Hay que compararlas LEYENDO
+   los números; las barras solo se revelan al comprobar. */
 function MeasureCompareExercise({ step, apiRef, onCanCheck, phase, slot }) {
-  const { measure, a, b } = step;
-  const [sel, setSelRaw] = useState(() => (slot && slot.sel) || null);
+  const { measure, items } = step;
+  const [sel, setSelRaw] = useState(() => (slot && slot.sel != null ? slot.sel : null));
   const setSel = (s) => { if (slot) slot.sel = s; setSelRaw(s); };
-  const aM = window.measSumMilli(a), bM = window.measSumMilli(b);
-  const correctKey = aM >= bM ? "a" : "b";
+  const millis = items.map(it => window.measSumMilli(it));
+  const max = Math.max(...millis);
+  const correctIdx = millis.indexOf(max);
   const labelOf = (parts) => parts.map(p => `${p.n} ${window.measUnitSym(measure, p.prefix)}`).join(" ");
-  useEffect(() => { apiRef.current = { correctLabel: labelOf(correctKey === "a" ? a : b), check: () => sel === correctKey }; });
+  useEffect(() => { apiRef.current = { correctLabel: labelOf(items[correctIdx]), check: () => sel === correctIdx }; });
   useEffect(() => { onCanCheck(sel != null); }, [sel]);
-  const max = Math.max(aM, bM);
+  const checked = phase === "checked";
 
-  const Card = ({ k, parts, milli, color }) => {
-    const selected = sel === k, isCorrect = k === correctKey;
-    let border = "var(--ink)", bg = "var(--surface)";
-    if (phase === "checked") { if (isCorrect) { border = "var(--ok)"; bg = "var(--ok-soft)"; } else if (selected) { border = "var(--ng)"; bg = "var(--ng-soft)"; } }
-    else if (selected) { border = "var(--secondary-strong)"; bg = "var(--bg-2)"; }
-    return (
-      <button onClick={() => phase === "input" && setSel(k)} style={{
-        display: "grid", gap: "var(--space-3)", padding: "var(--space-4)", background: bg,
-        border: `3px solid ${border}`, borderRadius: "var(--r-lg)", boxShadow: selected ? "0 5px 0 var(--ink)" : "0 4px 0 rgba(42,42,51,0.25)",
-        textAlign: "center", transition: "all 150ms", flex: 1, minWidth: 0,
-      }}>
-        <MeasureValue measure={measure} parts={parts} size={28}/>
-        <div style={{ width: "100%", height: 18, background: "var(--bg-2)", borderRadius: 999, overflow: "hidden", border: "2px solid var(--ink)" }}>
-          <div style={{ width: `${Math.max(6, (milli / max) * 100)}%`, height: "100%", background: color, borderRadius: 999 }}/>
-        </div>
-      </button>
-    );
-  };
   return (
-    <div style={{ display: "grid", gap: "var(--space-5)" }}>
+    <div style={{ display: "grid", gap: "var(--space-4)" }}>
       <QuestionBar>{t("mCompareQ")}</QuestionBar>
-      <div style={{ display: "flex", gap: "var(--space-4)", alignItems: "stretch" }}>
-        <Card k="a" parts={a} milli={aM} color="var(--primary)"/>
-        <Card k="b" parts={b} milli={bM} color="var(--secondary)"/>
+      <div style={{ display: "grid", gap: "var(--space-3)" }}>
+        {items.map((it, i) => {
+          const selected = sel === i, isCorrect = i === correctIdx;
+          let border = "var(--ink)", bg = "var(--surface)";
+          if (checked) { if (isCorrect) { border = "var(--ok)"; bg = "var(--ok-soft)"; } else if (selected) { border = "var(--ng)"; bg = "var(--ng-soft)"; } }
+          else if (selected) { border = "var(--secondary-strong)"; bg = "var(--bg-2)"; }
+          return (
+            <button key={i} onClick={() => phase === "input" && setSel(i)} style={{
+              display: "grid", gap: "var(--space-2)", padding: "var(--space-4) var(--space-5)", background: bg,
+              border: `3px solid ${border}`, borderRadius: "var(--r-lg)", boxShadow: selected ? "0 5px 0 var(--ink)" : "0 4px 0 rgba(42,42,51,0.25)",
+              textAlign: "center", transition: "all 150ms", width: "100%",
+            }}>
+              <MeasureValue measure={measure} parts={it} size={40}/>
+              {/* La barra ocupa sitio siempre (no redimensiona la caja): rayas
+                  grises mientras se decide, barra de color al comprobar. */}
+              <div style={{ width: "100%", height: 16, background: "var(--bg-2)", borderRadius: 999, overflow: "hidden", border: "2px solid var(--ink)" }}>
+                {checked ? (
+                  <div style={{ width: `${Math.max(6, (millis[i] / max) * 100)}%`, height: "100%", background: isCorrect ? "var(--ok)" : "var(--secondary)", borderRadius: 999, transition: "width 450ms ease" }}/>
+                ) : (
+                  <div style={{ width: "100%", height: "100%", opacity: 0.5, backgroundImage: "repeating-linear-gradient(45deg, var(--ink-faint) 0, var(--ink-faint) 5px, transparent 5px, transparent 10px)" }}/>
+                )}
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

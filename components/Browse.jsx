@@ -530,17 +530,27 @@ function LessonIntro({ lessonId, onBack, onStart }) {
   const pack = (INTRO_CONTENT[lessonId] && (INTRO_CONTENT[lessonId][lang] || INTRO_CONTENT[lessonId].es)) || INTRO_CONTENT.units.es;
   const tbl = lessonTable(lessonId);
   const [showTable, setShowTable] = useState(false);
+  const [showUnits, setShowUnits] = useState(false);
+  const [enabled, setEnabled] = useState(() => isMeasure ? window.measEnabled(lessonId) : []);
+  const roundBtn = { width: 40, height: 40, borderRadius: "50%", background: "var(--surface)", border: "3px solid var(--ink)", boxShadow: "0 3px 0 var(--ink)", display: "grid", placeItems: "center", flexShrink: 0 };
+  const headerRight = tbl ? (
+    <button onClick={() => setShowTable(true)} aria-label={t("tables")} style={roundBtn}>
+      <svg viewBox="0 0 24 24" width={20} height={20}><rect x="4" y="4" width="16" height="16" rx="2.5" fill="none" stroke="var(--ink)" strokeWidth="2.2"/><path d="M 4 10 L 20 10 M 4 15 L 20 15 M 10 4 L 10 20 M 15 4 L 15 20" stroke="var(--ink)" strokeWidth="1.8"/></svg>
+    </button>
+  ) : isMeasure ? (
+    <button onClick={() => setShowUnits(true)} aria-label={t("pick_units")} style={roundBtn}>
+      <svg viewBox="0 0 24 24" width={21} height={21} fill="none" stroke="var(--ink)" strokeWidth="2">
+        <circle cx="12" cy="12" r="5.2"/><circle cx="12" cy="12" r="1.9"/>
+        {[0,45,90,135,180,225,270,315].map((deg,i)=>{const a=deg*Math.PI/180,c=Math.cos(a),s=Math.sin(a);return <line key={i} x1={12+5.2*c} y1={12+5.2*s} x2={12+8*c} y2={12+8*s} strokeLinecap="round"/>;})}
+      </svg>
+    </button>
+  ) : null;
   return (
     <div style={{ position: "relative", height: "100dvh", display: "flex", flexDirection: "column" }}>
       <BgDecor/>
       <ScreenHeader onBack={onBack} center={
         <h1 style={{ margin: 0, fontSize: "calc(20px * var(--scale))", fontWeight: 700, lineHeight: 1.1 }}>{lessonTitle(lessonId)}</h1>
-      } right={tbl && (
-        <button onClick={() => setShowTable(true)} aria-label={t("tables")}
-          style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--surface)", border: "3px solid var(--ink)", boxShadow: "0 3px 0 var(--ink)", display: "grid", placeItems: "center", flexShrink: 0 }}>
-          <svg viewBox="0 0 24 24" width={20} height={20}><rect x="4" y="4" width="16" height="16" rx="2.5" fill="none" stroke="var(--ink)" strokeWidth="2.2"/><path d="M 4 10 L 20 10 M 4 15 L 20 15 M 10 4 L 10 20 M 15 4 L 15 20" stroke="var(--ink)" strokeWidth="1.8"/></svg>
-        </button>
-      )}/>
+      } right={headerRight}/>
 
       {/* Botón arriba que lleva a los ejercicios */}
       <div style={{ padding: "0 var(--space-5) var(--space-3)", position: "relative", zIndex: 3, maxWidth: 560, margin: "0 auto", width: "100%" }}>
@@ -560,10 +570,11 @@ function LessonIntro({ lessonId, onBack, onStart }) {
         {lessonId === "multiply" && <MultiplyIntroBody c={pack}/>}
         {lessonId === "divide" && <DivideIntroBody c={pack}/>}
         {lessonId === "units" && <UnitsIntroBody c={pack}/>}
-        {isMeasure && <MeasureIntroBody lessonId={lessonId}/>}
+        {isMeasure && <MeasureIntroBody lessonId={lessonId} enabled={enabled}/>}
       </div>
 
       {tbl && showTable && <TablesOverlay op={tbl.op} title={tbl.title} onClose={() => setShowTable(false)}/>}
+      {isMeasure && showUnits && <UnitPicker measure={lessonId} onChange={setEnabled} onClose={() => setShowUnits(false)}/>}
     </div>
   );
 }
