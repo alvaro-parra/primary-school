@@ -9,6 +9,12 @@
 
 /* Iconitos de los sistemas. */
 function MeasureIcon({ kind, size = 28, color = "var(--ink)" }) {
+  if (kind === "clock") return (
+    <svg viewBox="0 0 24 24" width={size} height={size}>
+      <circle cx="12" cy="12" r="8.5" fill="none" stroke={color} strokeWidth="2.2"/>
+      <path d="M12 7 v5 l3.5 2" stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
   if (kind === "scale") return (
     <svg viewBox="0 0 24 24" width={size} height={size}>
       <path d="M4 7 h16 M12 7 v12 M8 20 h8" stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round"/>
@@ -31,8 +37,8 @@ function MeasureIcon({ kind, size = 28, color = "var(--ink)" }) {
   );
 }
 
-const MEAS_TITLE = (id) => id === "length" ? t("lesson_length") : id === "mass" ? t("lesson_mass") : t("lesson_capacity");
-const MEAS_SUB   = (id) => id === "length" ? t("length_sub") : id === "mass" ? t("mass_sub") : t("capacity_sub");
+const MEAS_TITLE = (id) => t({ length: "lesson_length", mass: "lesson_mass", capacity: "lesson_capacity", time: "lesson_time" }[id] || "lesson_capacity");
+const MEAS_SUB   = (id) => t({ length: "length_sub", mass: "mass_sub", capacity: "capacity_sub", time: "time_sub" }[id] || "capacity_sub");
 
 /* ── Modal genérico (portal a body, sin navegación) ──────────── */
 function Modal({ onClose, children, maxWidth = 380 }) {
@@ -84,19 +90,47 @@ const MEAS_CONTENT = {
     es: { intro: "La capacidad es cuánto líquido cabe. La unidad base es el litro (L). Para poca cantidad usamos el decilitro (dL) y el mililitro (mL).", rule: "Cada escalón es 10 veces:" },
     ja: { intro: "かさ（どれだけ えきたいが はいるか）を はかります。きほんの たんいは リットル（L）。すこしの ときは デシリットル（dL）や ミリリットル（mL）。", rule: "1だん ごとに 10ばい：" },
   },
+  time: {
+    es: { intro: "El tiempo mide cuánto dura algo. Se cuenta en días (d), horas (h), minutos (min) y segundos (s). Aquí cada escalón NO es 10.", rule: "Cada escalón es distinto:" },
+    ja: { intro: "じかんは どれくらい つづくかを はかります。ひ（d）・じかん（h）・ふん（min）・びょう（s）で かぞえます。ここは 10ずつ ではありません。", rule: "だんは バラバラ：" },
+  },
 };
 
-/* Equivalencia básica del sistema como fórmula grande (1 L = 10 dL = 1000 mL). */
+/* Equivalencias básicas del sistema.
+   · Métrico (×10): una cadena única (1 L = 10 dL = 1000 mL).
+   · Tiempo (escalera irregular): una fila por escalón adyacente
+     (1 d = 24 h, 1 h = 60 min, 1 min = 60 s), porque "1 d = 86400 s" no
+     le dice nada a un niño pequeño. */
 function LadderRule({ measure }) {
-  const exp = (p) => window.measUnitExp(p);
-  const desc = window.MIDOKU_MEASURES[measure].basic.slice().sort((a, b) => exp(b) - exp(a));   // mayor → menor
-  const chain = desc.map((p, i) => ({ n: i === 0 ? 1 : Math.pow(10, exp(desc[0]) - exp(p)), prefix: p }));
+  const atom = (p) => window.measUnitAtom(measure, p);
+  const desc = window.MIDOKU_MEASURES[measure].basic.slice().sort((a, b) => atom(b) - atom(a));   // mayor → menor
+  const irregular = window.MIDOKU_MEASURES[measure].kind === "time";
+  const Eq = () => <span className="math-num" style={{ fontSize: "calc(24px * var(--scale))", fontWeight: 700, color: "var(--ink-soft)" }}>=</span>;
+  const Term = ({ n, prefix }) => (
+    <span className="math-num" style={{ fontSize: "calc(32px * var(--scale))", fontWeight: 800 }}>{n}<span style={{ color: "var(--cm-accent)", fontSize: "0.5em", marginLeft: 1 }}>{window.measUnitSym(measure, prefix)}</span></span>
+  );
+
+  if (irregular) {
+    // Escalón a escalón: 1 [alta] = factor [baja siguiente].
+    const rows = desc.slice(0, -1).map((hi, i) => ({ hi, lo: desc[i + 1], f: atom(hi) / atom(desc[i + 1]) }));
+    return (
+      <div style={{ display: "grid", gap: "calc(6px * var(--scale))", justifyItems: "center", padding: "var(--space-2) 0 var(--space-1)" }}>
+        {rows.map((r) => (
+          <div key={r.hi} style={{ display: "flex", alignItems: "baseline", gap: "calc(8px * var(--scale))" }}>
+            <Term n={1} prefix={r.hi}/><Eq/><Term n={r.f} prefix={r.lo}/>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const chain = desc.map(p => ({ n: atom(desc[0]) / atom(p), prefix: p }));
   return (
     <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: "calc(8px * var(--scale))", flexWrap: "wrap", padding: "var(--space-2) 0 var(--space-1)" }}>
       {chain.map((c, i) => (
         <React.Fragment key={c.prefix}>
-          {i > 0 && <span className="math-num" style={{ fontSize: "calc(24px * var(--scale))", fontWeight: 700, color: "var(--ink-soft)" }}>=</span>}
-          <span className="math-num" style={{ fontSize: "calc(32px * var(--scale))", fontWeight: 800 }}>{c.n}<span style={{ color: "var(--cm-accent)", fontSize: "0.5em", marginLeft: 1 }}>{window.measUnitSym(measure, c.prefix)}</span></span>
+          {i > 0 && <Eq/>}
+          <Term n={c.n} prefix={c.prefix}/>
         </React.Fragment>
       ))}
     </div>
@@ -201,11 +235,11 @@ function UnitConverter({ measure, enabled }) {
   const [vals, setVals] = useState(() => desc.map((_, i) => (i === 0 ? 1 : 0)));
   const set = (i, v) => setVals(prev => { const c = [...prev]; c[i] = v; return c; });
 
-  const totalMilli = desc.reduce((s, p, i) => s + vals[i] * window.measUnitMilli(p), 0);
+  const totalAtoms = desc.reduce((s, p, i) => s + vals[i] * window.measUnitAtom(measure, p), 0);
   // Filas de salida: desde todas las unidades hasta solo la más pequeña.
   const rows = desc.map((_, k) => {
     const groupAsc = desc.slice(k).slice().reverse();        // ascendente
-    return window.measDecompose(totalMilli, groupAsc);        // mayor → menor
+    return window.measDecompose(measure, totalAtoms, groupAsc);   // mayor → menor
   });
 
   return (
@@ -232,7 +266,7 @@ function UnitConverter({ measure, enabled }) {
 
 /* ── Modal selector de unidades ──────────────────────────────── */
 function UnitPicker({ measure, onClose, onChange }) {
-  const ladder = window.measLadder();
+  const ladder = window.measLadder(measure);
   const [sel, setSel] = useState(() => window.measEnabled(measure));
   const lang = getLang();
   const toggle = (prefix) => {
@@ -327,9 +361,9 @@ function MeasureIntroBody({ lessonId, enabled }) {
 /* ── Ejercicio de conversión (tipo "mConvert") ───────────────── */
 function MeasureConvertExercise({ step, apiRef, onCanCheck, phase, slot }) {
   const { measure, given, ask } = step;
-  const totalMilli = window.measSumMilli(given);
-  const askAsc = ask.slice().sort((a, b) => window.measUnitExp(a) - window.measUnitExp(b));
-  const parts = window.measDecompose(totalMilli, askAsc);   // mayor → menor (orden de lectura)
+  const totalAtoms = window.measSumAtoms(measure, given);
+  const askAsc = ask.slice().sort((a, b) => window.measUnitAtom(measure, a) - window.measUnitAtom(measure, b));
+  const parts = window.measDecompose(measure, totalAtoms, askAsc);   // mayor → menor (orden de lectura)
   const slots = parts.map(p => ({ unit: window.measUnitSym(measure, p.prefix), max: Math.max(4, String(p.n).length) }));
   const entry = useNumEntry(slots, slot);
   const correctLabel = parts.map(p => `${p.n} ${window.measUnitSym(measure, p.prefix)}`).join(" ");
@@ -363,7 +397,7 @@ function MeasureCompareExercise({ step, apiRef, onCanCheck, phase, slot }) {
   const { measure, items } = step;
   const [sel, setSelRaw] = useState(() => (slot && slot.sel != null ? slot.sel : null));
   const setSel = (s) => { if (slot) slot.sel = s; setSelRaw(s); };
-  const millis = items.map(it => window.measSumMilli(it));
+  const millis = items.map(it => window.measSumAtoms(measure, it));
   const max = Math.max(...millis);
   const correctIdx = millis.indexOf(max);
   const labelOf = (parts) => parts.map(p => `${p.n} ${window.measUnitSym(measure, p.prefix)}`).join(" ");
@@ -407,11 +441,11 @@ function MeasureCompareExercise({ step, apiRef, onCanCheck, phase, slot }) {
 /* ── Ejercicio: sumar/restar medidas (tipo "mCalc") ──────────── */
 function MeasureCalcExercise({ step, apiRef, onCanCheck, phase, slot }) {
   const { measure, op, a, b } = step;
-  const aM = window.measSumMilli(a), bM = window.measSumMilli(b);
+  const aM = window.measSumAtoms(measure, a), bM = window.measSumAtoms(measure, b);
   const total = op === "+" ? aM + bM : aM - bM;
   // Respuesta en las unidades que aparecen en los operandos (ascendente).
-  const prefixes = [...new Set([...a, ...b].map(x => x.prefix))].sort((x, y) => window.measUnitExp(x) - window.measUnitExp(y));
-  const parts = window.measDecompose(total, prefixes);   // mayor → menor
+  const prefixes = [...new Set([...a, ...b].map(x => x.prefix))].sort((x, y) => window.measUnitAtom(measure, x) - window.measUnitAtom(measure, y));
+  const parts = window.measDecompose(measure, total, prefixes);   // mayor → menor
   const slots = parts.map(p => ({ unit: window.measUnitSym(measure, p.prefix), max: Math.max(4, String(p.n).length) }));
   const entry = useNumEntry(slots, slot);
   const correctLabel = parts.map(p => `${p.n} ${window.measUnitSym(measure, p.prefix)}`).join(" ");

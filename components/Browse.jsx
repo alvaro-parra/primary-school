@@ -14,6 +14,7 @@ function MiniIcon({ kind }) {
   if (kind === "scale") return <svg viewBox="0 0 24 24" width={30} height={30}><path d="M4 7 h16 M12 7 v12 M8 20 h8" stroke={c} strokeWidth="2.4" fill="none" strokeLinecap="round"/><path d="M4 7 L2 13 a3 3 0 0 0 6 0 Z M20 7 L18 13 a3 3 0 0 0 6 0 Z" fill="none" stroke={c} strokeWidth="2"/></svg>;
   if (kind === "drop") return <svg viewBox="0 0 24 24" width={28} height={28}><path d="M12 3 C12 3 5 11 5 15 a7 7 0 0 0 14 0 C19 11 12 3 12 3 Z" fill="none" stroke={c} strokeWidth="2.4" strokeLinejoin="round"/></svg>;
   if (kind === "measures") return <svg viewBox="0 0 24 24" width={30} height={30} fill="none" stroke={c} strokeWidth="2.6" strokeLinecap="round"><line x1="5" y1="20" x2="5" y2="13"/><line x1="12" y1="20" x2="12" y2="9"/><line x1="19" y1="20" x2="19" y2="5"/><line x1="3" y1="20" x2="21" y2="20"/></svg>;
+  if (kind === "clock") return <svg viewBox="0 0 24 24" width={28} height={28} fill="none" stroke={c} strokeWidth="2.4"><circle cx="12" cy="12" r="8.5"/><path d="M12 7 v5 l3.5 2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
   if (kind === "compare") return <svg viewBox="0 0 24 24" width={28} height={28}><rect x="4" y="13" width="6" height="7" rx="1.5" fill={c}/><rect x="14" y="6" width="6" height="14" rx="1.5" fill={c}/></svg>;
   return <svg viewBox="0 0 24 24" width={32} height={32}><rect x="3" y="8" width="18" height="9" rx="2" fill="none" stroke={c} strokeWidth="2.5"/>{[6,9,12,15,18].map((x,i)=><line key={i} x1={x} y1="8" x2={x} y2={i%2===0?"14":"11.5"} stroke={c} strokeWidth="2" strokeLinecap="round"/>)}</svg>;
 }
@@ -28,6 +29,7 @@ function lessonTitle(id) {
   if (id === "length") return t("lesson_length");
   if (id === "mass") return t("lesson_mass");
   if (id === "capacity") return t("lesson_capacity");
+  if (id === "time") return t("lesson_time");
   if (id === "addRuler") return t("lesson_addRuler");
   if (id === "compareLen") return t("lesson_compareLen");
   return id;
@@ -42,6 +44,7 @@ function lessonSub(id) {
   if (id === "length") return t("length_sub");
   if (id === "mass") return t("mass_sub");
   if (id === "capacity") return t("capacity_sub");
+  if (id === "time") return t("time_sub");
   return t("locked");
 }
 

@@ -43,7 +43,7 @@ function ProblemList({ problems, solved, onBack, onPick, onReset, justCompleted,
       }/>
       <div style={{ position: "relative", zIndex: 2, display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-3)", padding: "var(--space-3) var(--space-5)", maxWidth: 560, margin: "0 auto" }}>
         {problems.map(p => (
-          <ProblemCard key={p.id} icon={p.icon} title={p.nameKey ? t(p.nameKey) : t("pn_" + p.id)} done={!!(solved && solved[p.id])} onClick={() => onPick(p.id)}/>
+          <ProblemCard key={p.id} icon={p.icon} title={p.nameKey ? t(p.nameKey) : t("pn_" + p.id)} tag={p.tag} done={!!(solved && solved[p.id])} onClick={() => onPick(p.id)}/>
         ))}
       </div>
       {confirm && (
@@ -61,7 +61,7 @@ function ProblemList({ problems, solved, onBack, onPick, onReset, justCompleted,
   );
 }
 
-function ProblemCard({ icon, title, done, onClick }) {
+function ProblemCard({ icon, title, tag, done, onClick }) {
   const press = (e, d) => {
     e.currentTarget.style.transform = d ? "translateY(4px)" : "translateY(0)";
     e.currentTarget.style.boxShadow = d ? "0 1px 0 var(--ink)" : "0 5px 0 var(--ink)";
@@ -78,6 +78,7 @@ function ProblemCard({ icon, title, done, onClick }) {
         <ProblemIcon kind={icon}/>
       </span>
       <span style={{ fontWeight: 700, fontSize: "calc(15px * var(--scale))", lineHeight: 1.15, textWrap: "pretty" }}>{title}</span>
+      {tag && <span className="math-num" style={{ fontWeight: 800, fontSize: "calc(13px * var(--scale))", color: "var(--cm-accent)", letterSpacing: "0.02em" }}>{tag}</span>}
       {done && (
         <span aria-hidden style={{ position: "absolute", top: 8, right: 8, width: 24, height: 24, borderRadius: "50%", background: "var(--ok)", border: "2px solid var(--ink)", display: "grid", placeItems: "center" }}>
           <svg viewBox="0 0 24 24" width={14} height={14}><path d="M 5 13 L 10 18 L 19 6" stroke="var(--ink)" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
